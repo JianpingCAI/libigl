@@ -17,10 +17,10 @@
 
 if(NOT Eigen_FIND_VERSION)
   if(NOT Eigen_FIND_VERSION_MAJOR)
-    set(Eigen_FIND_VERSION_MAJOR 2)
+    set(Eigen_FIND_VERSION_MAJOR 3)
   endif(NOT Eigen_FIND_VERSION_MAJOR)
   if(NOT Eigen_FIND_VERSION_MINOR)
-    set(Eigen_FIND_VERSION_MINOR 91)
+    set(Eigen_FIND_VERSION_MINOR 2)
   endif(NOT Eigen_FIND_VERSION_MINOR)
   if(NOT Eigen_FIND_VERSION_PATCH)
     set(Eigen_FIND_VERSION_PATCH 0)
@@ -66,6 +66,13 @@ else ()
       ${CMAKE_INSTALL_PREFIX}/include
       ${KDE4_INCLUDE_DIR}
 	  ${PROJECT_SOURCE_DIR}/../../../Eigen
+    ${PROJECT_SOURCE_DIR}/../../../external/nanogui/ext/eigen/
+    ${PROJECT_SOURCE_DIR}/../../external/nanogui/ext/eigen/
+    ${PROJECT_SOURCE_DIR}/../external/nanogui/ext/eigen/
+    ${PROJECT_SOURCE_DIR}/../libigl/external/nanogui/ext/eigen/
+    ${PROJECT_SOURCE_DIR}/../../libigl/external/nanogui/ext/eigen/
+    ${PROJECT_SOURCE_DIR}/../../../libigl/external/nanogui/ext/eigen/
+	  $ENV{DevLibraries}/Eigen
       PATH_SUFFIXES eigen3 eigen
     )
 

@@ -1,18 +1,15 @@
-
 .PHONY: all
 
 all: example
 
 # Shared flags etc.
-include ../../build/Makefile.conf
+include ../Makefile.conf
 
 .PHONY: example
 
-igl_lib=../../
-
 CFLAGS+=-g -Wall 
-inc=-I$(igl_lib)/include
-lib=-L$(igl_lib)/lib -ligl
+inc=$(LIBIGL_INC)
+lib=$(LIBIGL_LIB)
 
 example: example.o
 	g++ $(CFLAGS) -o example example.o $(lib) 

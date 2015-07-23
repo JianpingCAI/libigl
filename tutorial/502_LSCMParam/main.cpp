@@ -1,6 +1,6 @@
+#include <igl/boundary_loop.h>
 #include <igl/readOFF.h>
 #include <igl/viewer/Viewer.h>
-#include <igl/boundary_loop.h>
 
 #include <igl/lscm.h>
 
@@ -8,7 +8,7 @@ Eigen::MatrixXd V;
 Eigen::MatrixXi F;
 Eigen::MatrixXd V_uv;
 
-bool key_down(igl::Viewer& viewer, unsigned char key, int modifier)
+bool key_down(igl::viewer::Viewer& viewer, unsigned char key, int modifier)
 {
 
   if (key == '1')
@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 
   // Fix two points on the boundary
   VectorXi bnd,b(2,1);
-  igl::boundary_loop(V,F,bnd);
+  igl::boundary_loop(F,bnd);
   b(0) = bnd(0);
   b(1) = bnd(round(bnd.size()/2));
   MatrixXd bc(2,2);
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
   V_uv *= 5;
 
   // Plot the mesh
-  igl::Viewer viewer;
+  igl::viewer::Viewer viewer;
   viewer.data.set_mesh(V, F);
   viewer.data.set_uv(V_uv);
   viewer.callback_key_down = &key_down;

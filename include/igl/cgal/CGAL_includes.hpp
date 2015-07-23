@@ -8,6 +8,11 @@
 #ifndef IGL_CGAL_INCLUDES_H
 #define IGL_CGAL_INCLUDES_H
 
+// This causes unknown bugs during intersection meshing:
+//// http://www.alecjacobson.com/weblog/?p=4291
+//#define CGAL_INTERSECTION_VERSION 1
+// Use this instead to mute errors resulting from bad CGAL assertions
+#define CGAL_KERNEL_NO_ASSERTIONS
 // Triangle triangle intersection
 #include <CGAL/intersections.h>
 // THIS CANNOT BE INCLUDED IN THE SAME FILE AS <CGAL/intersections.h>
@@ -31,9 +36,9 @@
 #include <CGAL/AABB_traits.h>
 #include <CGAL/AABB_triangle_primitive.h>
 
-// ALEC: IS ANY IGL FUNCTION USING THESE?
-//// Boolean operations
-//#include <CGAL/Polyhedron_3.h>
+// Boolean operations
+#include <CGAL/Polyhedron_3.h>
+// Is this actually used?
 //#include <CGAL/Nef_polyhedron_3.h>
 
 // Delaunay Triangulation in 3D

@@ -1,19 +1,14 @@
-
 .PHONY: all
 
 # Shared flags etc.
-include ../../build/Makefile.conf
+include ../Makefile.conf
 
 all: example
 
 .PHONY: example
 
-IGL=../../
-
-ANTTWEAKBAR_INC=-I$(IGL)/external/AntTweakBar/include
-ANTTWEAKBAR_LIB=-L$(IGL)/external/AntTweakBar/lib -lAntTweakBar -framework AppKit
-inc=-DIGL_HEADER_ONLY -I$(IGL)/include -I$(DEFAULT_PREFIX)/include $(ANTTWEAKBAR_INC)
-lib=-L$(IGL)/lib -ligl -L$(DEFAULT_PREFIX)/lib $(OPENGL_LIB) $(GLUT_LIB) $(ANTTWEAKBAR_LIB)
+inc=$(LIBIGL_INC) $(ANTTWEAKBAR_INC)
+lib=$(LIBIGL_LIB) $(OPENGL_LIB) $(GLUT_LIB) $(ANTTWEAKBAR_LIB)
 CFLAGS+=-g
 
 example: example.o

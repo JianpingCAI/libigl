@@ -1,3 +1,10 @@
+// This file is part of libigl, a simple c++ geometry processing library.
+// 
+// Copyright (C) 2015 Alec Jacobson <alecjacobson@gmail.com>
+// 
+// This Source Code Form is subject to the terms of the Mozilla Public License 
+// v. 2.0. If a copy of the MPL was not distributed with this file, You can 
+// obtain one at http://mozilla.org/MPL/2.0/.
 #include "facet_components.h"
 #include <igl/triangle_triangle_adjacency.h>
 #include <vector>
@@ -8,12 +15,12 @@ IGL_INLINE void igl::facet_components(
   Eigen::PlainObjectBase<DerivedC> & C)
 {
   using namespace std;
-  using namespace igl;
   typedef typename DerivedF::Index Index;
   vector<vector<vector<Index > > > TT;
   vector<vector<vector<Index > > > TTi;
   triangle_triangle_adjacency(F,TT,TTi);
-  return facet_components(TT,C);
+  Eigen::VectorXi counts;
+  return facet_components(TT,C,counts);
 }
 
 template <
@@ -26,7 +33,6 @@ IGL_INLINE void igl::facet_components(
   Eigen::PlainObjectBase<Derivedcounts> & counts)
 {
   using namespace std;
-  using namespace igl;
   typedef TTIndex Index;
   const Index m = TT.size();
   C.resize(m,1);
@@ -68,9 +74,9 @@ IGL_INLINE void igl::facet_components(
     }
     id++;
   }
-  assert(id == vcounts.size());
+  assert((size_t) id == vcounts.size());
   const size_t ncc = vcounts.size();
-  assert(C.maxCoeff()+1 == ncc);
+  assert((size_t)C.maxCoeff()+1 == ncc);
   counts.resize(ncc,1);
   for(size_t i = 0;i<ncc;i++)
   {

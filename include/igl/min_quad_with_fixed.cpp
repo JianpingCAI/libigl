@@ -38,7 +38,6 @@ IGL_INLINE bool igl::min_quad_with_fixed_precompute(
 //#define MIN_QUAD_WITH_FIXED_CPP_DEBUG
   using namespace Eigen;
   using namespace std;
-  using namespace igl;
   const Eigen::SparseMatrix<T> A = 0.5*A2;
 #ifdef MIN_QUAD_WITH_FIXED_CPP_DEBUG
   cout<<"    pre"<<endl;
@@ -52,18 +51,19 @@ IGL_INLINE bool igl::min_quad_with_fixed_precompute(
   // default is to have 0 linear equality constraints
   if(Aeq.size() != 0)
   {
-    assert(n == Aeq.cols());
+    assert(n == Aeq.cols() && "#Aeq.cols() should match A.rows()");
   }
 
-  assert(A.rows() == n);
-  assert(A.cols() == n);
+  assert(A.rows() == n && "A should be square");
+  assert(A.cols() == n && "A should be square");
 
   // number of known rows
   int kr = known.size();
 
-  assert(kr == 0 || known.minCoeff() >= 0);
-  assert(kr == 0 || known.maxCoeff() < n);
-  assert(neq <= n);
+  assert((kr == 0 || known.minCoeff() >= 0)&& "known indices should be in [0,n)");
+  assert((kr == 0 || known.maxCoeff() < n) && "known indices should be in [0,n)");
+  assert(neq <= n && "Number of equality constraints should be less than DOFs");
+
 
   // cache known
   data.known = known;
@@ -96,6 +96,7 @@ IGL_INLINE bool igl::min_quad_with_fixed_precompute(
 
   SparseMatrix<T> Auu;
   slice(A,data.unknown,data.unknown,Auu);
+  assert(Auu.size() > 0 && "There should be at least one unknown.");
 
   // Positive definiteness is *not* determined, rather it is given as a
   // parameter
@@ -106,7 +107,8 @@ IGL_INLINE bool igl::min_quad_with_fixed_precompute(
     data.Auu_sym = true;
     // This is an annoying assertion unless EPS can be chosen in a nicer way.
     //assert(is_symmetric(Auu,EPS<double>()));
-    assert(is_symmetric(Auu,1.0));
+    assert(is_symmetric(Auu,1.0) && 
+      "Auu should be symmetric if positive definite");
   }else
   {
     // determine if A(unknown,unknown) is symmetric and/or positive definite
@@ -125,8 +127,10 @@ IGL_INLINE bool igl::min_quad_with_fixed_precompute(
 #endif
     // QR decomposition to determine row rank in Aequ
     slice(Aeq,data.unknown,2,data.Aequ);
-    assert(data.Aequ.rows() == neq);
-    assert(data.Aequ.cols() == data.unknown.size());
+    assert(data.Aequ.rows() == neq && 
+      "#Rows in Aequ should match #constraints");
+    assert(data.Aequ.cols() == data.unknown.size() && 
+      "#cols in Aequ should match #unknowns");
     data.AeqTQR.compute(data.Aequ.transpose().eval());
 #ifdef MIN_QUAD_WITH_FIXED_CPP_DEBUG
     cout<<endl<<matlab_format(SparseMatrix<T>(data.Aequ.transpose().eval()),"AeqT")<<endl<<endl;
@@ -146,7 +150,8 @@ IGL_INLINE bool igl::min_quad_with_fixed_precompute(
         return false;
     }
     nc = data.AeqTQR.rank();
-    assert(nc<=neq);
+    assert(nc<=neq && 
+      "Rank of reduced constraints should be <= #original constraints");
     data.Aeq_li = nc == neq;
     //cout<<"data.Aeq_li: "<<data.Aeq_li<<endl;
   }else
@@ -304,10 +309,10 @@ IGL_INLINE bool igl::min_quad_with_fixed_precompute(
     I.setIdentity();
     data.AeqTE = data.AeqTQR.colsPermutation() * I;
     data.AeqTET = data.AeqTQR.colsPermutation().transpose() * I;
-    assert(AeqTR.rows() == neq);
-    assert(AeqTQ.rows() == nu);
-    assert(AeqTQ.cols() == nu);
-    assert(AeqTR.cols() == neq);
+    assert(AeqTR.rows() == nu   && "#rows in AeqTR should match #unknowns");
+    assert(AeqTR.cols() == neq  && "#cols in AeqTR should match #constraints");
+    assert(AeqTQ.rows() == nu && "#rows in AeqTQ should match #unknowns");
+    assert(AeqTQ.cols() == nu && "#cols in AeqTQ should match #unknowns");
     //cout<<"    slice"<<endl;
 #ifdef MIN_QUAD_WITH_FIXED_CPP_DEBUG
     cout<<"    slice"<<endl;
@@ -382,7 +387,6 @@ IGL_INLINE bool igl::min_quad_with_fixed_solve(
 {
   using namespace std;
   using namespace Eigen;
-  using namespace igl;
   typedef Matrix<T,Dynamic,1> VectorXT;
   typedef Matrix<T,Dynamic,Dynamic> MatrixXT;
   // number of known rows
@@ -534,6 +538,31 @@ IGL_INLINE bool igl::min_quad_with_fixed_solve(
 {
   Eigen::PlainObjectBase<DerivedZ> sol;
   return min_quad_with_fixed_solve(data,B,Y,Beq,Z,sol);
+}
+
+template <
+  typename T,
+  typename Derivedknown,
+  typename DerivedB,
+  typename DerivedY,
+  typename DerivedBeq,
+  typename DerivedZ>
+IGL_INLINE bool igl::min_quad_with_fixed(
+  const Eigen::SparseMatrix<T>& A,
+  const Eigen::PlainObjectBase<DerivedB> & B,
+  const Eigen::PlainObjectBase<Derivedknown> & known,
+  const Eigen::PlainObjectBase<DerivedY> & Y,
+  const Eigen::SparseMatrix<T>& Aeq,
+  const Eigen::PlainObjectBase<DerivedBeq> & Beq,
+  const bool pd,
+  Eigen::PlainObjectBase<DerivedZ> & Z)
+{
+  min_quad_with_fixed_data<T> data;
+  if(!min_quad_with_fixed_precompute(A,known,Aeq,pd,data))
+  {
+    return false;
+  }
+  return min_quad_with_fixed_solve(data,B,Y,Beq,Z);
 }
 
 #ifdef IGL_STATIC_LIBRARY

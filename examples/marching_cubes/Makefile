@@ -1,4 +1,3 @@
-
 .PHONY: all
 
 all: example
@@ -6,14 +5,11 @@ all: example
 .PHONY: example
 
 # Shared flags etc.
-include ../../build/Makefile.conf
-
-igl_lib=../../
-eigen=-I$(DEFAULT_PREFIX)/include/eigen3
+include ../Makefile.conf
 
 CFLAGS+=-g
-inc=-I$(igl_lib)/include $(eigen)
-lib=-L$(igl_lib)/lib -ligl
+inc=$(LIBIGL_INC) $(EIGEN3_INC)
+lib=$(LIBIGL_LIB)
 
 example: example.o
 	g++ $(CFLAGS) -o example example.o $(lib)

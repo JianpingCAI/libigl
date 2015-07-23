@@ -5,25 +5,24 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License
 // v. 2.0. If a copy of the MPL was not distributed with this file, You can
 // obtain one at http://mozilla.org/MPL/2.0/.
+#ifndef IGL_VIEWER_VIEWER_CORE_H
+#define IGL_VIEWER_VIEWER_CORE_H
 
-#ifndef IGL_VIEWER_CORE_H
-#define IGL_VIEWER_CORE_H
-
-#include <igl/igl_inline.h>
 #include <igl/viewer/TextRenderer.h>
 #include <igl/viewer/ViewerData.h>
 #include <igl/viewer/OpenGL_state.h>
 
+#include <igl/igl_inline.h>
+
 namespace igl
+{
+namespace viewer
 {
 
 // Basic class of the 3D mesh viewer
 // TODO: write documentation
 
 class ViewerCore
-#ifdef ENABLE_XML_SERIALIZATION
-: public ::igl::XMLSerialization
-#endif
 {
 public:
   IGL_INLINE ViewerCore();
@@ -59,7 +58,14 @@ public:
   IGL_INLINE void clear_framebuffers();
 
   // Draw everything
-  IGL_INLINE void draw(ViewerData& data, OpenGL_state& opengl);
+  IGL_INLINE void draw(ViewerData& data, OpenGL_state& opengl, bool update_matrices = true);
+  IGL_INLINE void draw_buffer(ViewerData& data,
+                              OpenGL_state& opengl,
+                              bool update_matrices,
+                              Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic>& R,
+                              Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic>& G,
+                              Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic>& B,
+                              Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic>& A);
 
   // ------------------- Properties
 
@@ -107,6 +113,7 @@ public:
   bool show_vertid;
   bool show_faceid;
   bool invert_normals;
+  bool depth_test;
 
   // Point size / line width
   float point_size;
@@ -128,6 +135,7 @@ public:
   Eigen::Matrix4f proj;
 };
 
+}
 }
 
 #ifndef IGL_STATIC_LIBRARY

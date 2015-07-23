@@ -27,15 +27,25 @@
 //
 #include <igl/cross_field_missmatch.h>
 #include <igl/comb_frame_field.h>
+#include <igl/comb_cross_field.h>
 #include <igl/cut_mesh_from_singularities.h>
 #include <igl/find_cross_field_singularities.h>
 #include <igl/compute_frame_field_bisectors.h>
 #include <igl/rotate_vectors.h>
 
+
+// #define DEBUG_PRINT
+#include <fstream>
+#include <iostream>
+#include <igl/matlab_format.h>
+using namespace std;
+using namespace Eigen;
+
 #define DEBUGPRINT 0
 
 
 namespace igl {
+namespace comiso {
 
   class SparseMatrixData{
   protected:
@@ -166,11 +176,11 @@ namespace igl {
     unsigned char MMatch;
 
     IGL_INLINE SeamInfo(int _v0,
-             int _v1,
-             int _v0p,
-             int _v1p,
-             int _MMatch,
-             int _integerVar);
+                        int _v1,
+                        int _v0p,
+                        int _v1p,
+                        int _MMatch,
+                        int _integerVar);
 
     IGL_INLINE SeamInfo(const SeamInfo &S1);
   };
@@ -201,12 +211,12 @@ namespace igl {
     const Eigen::PlainObjectBase<DerivedF> &F;
     const Eigen::PlainObjectBase<DerivedF> &TT;
     const Eigen::PlainObjectBase<DerivedF> &TTi;
-    const Eigen::PlainObjectBase<DerivedV> &PD1;
-    const Eigen::PlainObjectBase<DerivedV> &PD2;
+    // const Eigen::PlainObjectBase<DerivedV> &PD1;
+    // const Eigen::PlainObjectBase<DerivedV> &PD2;
 
     const Eigen::Matrix<int, Eigen::Dynamic, 3> &Handle_MMatch;
-    const Eigen::Matrix<int, Eigen::Dynamic, 1> &Handle_Singular; // bool
-    const Eigen::Matrix<int, Eigen::Dynamic, 1> &Handle_SingularDegree; // vertex;
+    // const Eigen::Matrix<int, Eigen::Dynamic, 1> &Handle_Singular; // bool
+    // const Eigen::Matrix<int, Eigen::Dynamic, 1> &Handle_SingularDegree; // vertex;
     const Eigen::Matrix<int, Eigen::Dynamic, 3> &Handle_Seams; // 3 bool
 
 
@@ -228,16 +238,16 @@ namespace igl {
     std::vector<bool> V_border; // bool
 
     IGL_INLINE VertexIndexing(const Eigen::PlainObjectBase<DerivedV> &_V,
-                   const Eigen::PlainObjectBase<DerivedF> &_F,
-                   const Eigen::PlainObjectBase<DerivedF> &_TT,
-                   const Eigen::PlainObjectBase<DerivedF> &_TTi,
-                   const Eigen::PlainObjectBase<DerivedV> &_PD1,
-                   const Eigen::PlainObjectBase<DerivedV> &_PD2,
-                   const Eigen::Matrix<int, Eigen::Dynamic, 3> &_Handle_MMatch,
-                   const Eigen::Matrix<int, Eigen::Dynamic, 1> &_Handle_Singular,
-                   const Eigen::Matrix<int, Eigen::Dynamic, 1> &_Handle_SingularDegree,
-                   const Eigen::Matrix<int, Eigen::Dynamic, 3> &_Handle_Seams
-                   );
+                              const Eigen::PlainObjectBase<DerivedF> &_F,
+                              const Eigen::PlainObjectBase<DerivedF> &_TT,
+                              const Eigen::PlainObjectBase<DerivedF> &_TTi,
+                              //  const Eigen::PlainObjectBase<DerivedV> &_PD1,
+                              //  const Eigen::PlainObjectBase<DerivedV> &_PD2,
+                              const Eigen::Matrix<int, Eigen::Dynamic, 3> &_Handle_MMatch,
+                              //  const Eigen::Matrix<int, Eigen::Dynamic, 1> &_Handle_Singular,
+                              //  const Eigen::Matrix<int, Eigen::Dynamic, 1> &_Handle_SingularDegree,
+                              const Eigen::Matrix<int, Eigen::Dynamic, 3> &_Handle_Seams
+                              );
 
     ///vertex to variable mapping
     IGL_INLINE void InitMapping();
@@ -261,12 +271,12 @@ namespace igl {
     IGL_INLINE bool HasIndex(int indexVert,int indexVar);
 
     IGL_INLINE void GetSeamInfo(const int f0,
-                     const int f1,
-                     const int indexE,
-                     int &v0,int &v1,
-                     int &v0p,int &v1p,
-                     unsigned char &_MMatch,
-                     int &integerVar);
+                                const int f1,
+                                const int indexE,
+                                int &v0,int &v1,
+                                int &v0p,int &v1p,
+                                unsigned char &_MMatch,
+                                int &integerVar);
     IGL_INLINE bool IsSeam(const int f0, const int f1);
 
     ///find initial position of the pos to
@@ -302,25 +312,25 @@ namespace igl {
 
   public:
     IGL_INLINE void SolvePoisson(Eigen::VectorXd Stiffness,
-                      double vector_field_scale=0.1f,
-                      double grid_res=1.f,
-                      bool direct_round=true,
-                      int localIter=0,
-                      bool _integer_rounding=true,
-                      bool _singularity_rounding=true,
-                      std::vector<int> roundVertices = std::vector<int>(),
-                      std::vector<std::vector<int> > hardFeatures = std::vector<std::vector<int> >());
+                                 double vector_field_scale=0.1f,
+                                 double grid_res=1.f,
+                                 bool direct_round=true,
+                                 int localIter=0,
+                                 bool _integer_rounding=true,
+                                 bool _singularity_rounding=true,
+                                 std::vector<int> roundVertices = std::vector<int>(),
+                                 std::vector<std::vector<int> > hardFeatures = std::vector<std::vector<int> >());
 
     IGL_INLINE PoissonSolver(const Eigen::PlainObjectBase<DerivedV> &_V,
-                  const Eigen::PlainObjectBase<DerivedF> &_F,
-                  const Eigen::PlainObjectBase<DerivedF> &_TT,
-                  const Eigen::PlainObjectBase<DerivedF> &_TTi,
-                  const Eigen::PlainObjectBase<DerivedV> &_PD1,
-                  const Eigen::PlainObjectBase<DerivedV> &_PD2,
-                  const Eigen::MatrixXi &_HandleS_Index,
-                  const Eigen::Matrix<int, Eigen::Dynamic, 1>&_Handle_Singular,
-                  const MeshSystemInfo &_Handle_SystemInfo
-                  );
+                             const Eigen::PlainObjectBase<DerivedF> &_F,
+                             const Eigen::PlainObjectBase<DerivedF> &_TT,
+                             const Eigen::PlainObjectBase<DerivedF> &_TTi,
+                             const Eigen::PlainObjectBase<DerivedV> &_PD1,
+                             const Eigen::PlainObjectBase<DerivedV> &_PD2,
+                             const Eigen::MatrixXi &_HandleS_Index,
+                             const Eigen::Matrix<int, Eigen::Dynamic, 1>&_Handle_Singular,
+                             const MeshSystemInfo &_Handle_SystemInfo
+                             );
 
     const Eigen::PlainObjectBase<DerivedV> &V;
     const Eigen::PlainObjectBase<DerivedF> &F;
@@ -398,17 +408,17 @@ namespace igl {
     ///START SYSTEM ACCESS METHODS
     ///add an entry to the LHS
     IGL_INLINE void AddValA(int Xindex,
-                 int Yindex,
-                 double val);
+                            int Yindex,
+                            double val);
 
     ///add a complex entry to the LHS
     IGL_INLINE void AddComplexA(int VarXindex,
-                     int VarYindex,
-                     std::complex<double> val);
+                                int VarYindex,
+                                std::complex<double> val);
 
     ///add a velue to the RHS
     IGL_INLINE void AddValB(int Xindex,
-                 double val);
+                            double val);
 
     ///add the area term, scalefactor is used to sum up
     ///and normalize on the overlap zones
@@ -422,7 +432,7 @@ namespace igl {
     ///a vector of indexes add such values
     ///as specified by the indexes
     IGL_INLINE void AddRHS(double b[6],
-                int index[3]);
+                           int index[3]);
 
     ///add a 3x3 block matrix to the system matrix...
     ///indexes are specified in the 3x3 matrix of x,y pairs
@@ -446,22 +456,22 @@ namespace igl {
     ///initialize the LHS for a given face
     ///for minimization of Dirichlet's energy
     IGL_INLINE void perElementLHS(int f,
-                       double val[3][3],
-                       int index[3][3][2]);
+                                  double val[3][3],
+                                  int index[3][3][2]);
 
     ///initialize the RHS for a given face
     ///for minimization of Dirichlet's energy
     IGL_INLINE void perElementRHS(int f,
-                       double b[6],
-                       double vector_field_scale=1);
+                                  double b[6],
+                                  double vector_field_scale=1);
 
     ///evaluate the LHS and RHS for a single face
     ///for minimization of Dirichlet's energy
     IGL_INLINE void PerElementSystemReal(int f,
-                              double val[3][3],
-                              int index[3][3][2],
-                              double b[6],
-                              double vector_field_scale=1.0);
+                                         double val[3][3],
+                                         int index[3][3][2],
+                                         double b[6],
+                                         double vector_field_scale=1.0);
     ///END ENERGY MINIMIZATION PART
 
     ///START FIXING VERTICES
@@ -514,8 +524,8 @@ namespace igl {
 
     ///call of the mixed integer solver
     IGL_INLINE void MixedIntegerSolve(double cone_grid_res=1,
-                           bool direct_round=true,
-                           int localIter=0);
+                                      bool direct_round=true,
+                                      int localIter=0);
 
     IGL_INLINE void clearUserConstraint();
 
@@ -540,30 +550,30 @@ namespace igl {
 
   public:
     IGL_INLINE MIQ_class(const Eigen::PlainObjectBase<DerivedV> &V_,
-              const Eigen::PlainObjectBase<DerivedF> &F_,
-              const Eigen::PlainObjectBase<DerivedV> &PD1_combed,
-              const Eigen::PlainObjectBase<DerivedV> &PD2_combed,
-              const Eigen::PlainObjectBase<DerivedV> &BIS1_combed,
-              const Eigen::PlainObjectBase<DerivedV> &BIS2_combed,
-              const Eigen::Matrix<int, Eigen::Dynamic, 3> &Handle_MMatch,
-              const Eigen::Matrix<int, Eigen::Dynamic, 1> &Handle_Singular,
-              const Eigen::Matrix<int, Eigen::Dynamic, 1> &Handle_SingularDegree,
-              const Eigen::Matrix<int, Eigen::Dynamic, 3> &Handle_Seams,
-              Eigen::PlainObjectBase<DerivedU> &UV,
-              Eigen::PlainObjectBase<DerivedF> &FUV,
-              double GradientSize = 30.0,
-              double Stiffness = 5.0,
-              bool DirectRound = false,
-              int iter = 5,
-              int localIter = 5,
-              bool DoRound = true,
-              bool SingularityRound=true,
-              std::vector<int> roundVertices = std::vector<int>(),
-              std::vector<std::vector<int> > hardFeatures = std::vector<std::vector<int> >());
+                         const Eigen::PlainObjectBase<DerivedF> &F_,
+                         const Eigen::PlainObjectBase<DerivedV> &PD1_combed,
+                         const Eigen::PlainObjectBase<DerivedV> &PD2_combed,
+                         // const Eigen::PlainObjectBase<DerivedV> &BIS1_combed,
+                         // const Eigen::PlainObjectBase<DerivedV> &BIS2_combed,
+                         const Eigen::Matrix<int, Eigen::Dynamic, 3> &Handle_MMatch,
+                         const Eigen::Matrix<int, Eigen::Dynamic, 1> &Handle_Singular,
+                         // const Eigen::Matrix<int, Eigen::Dynamic, 1> &Handle_SingularDegree,
+                         const Eigen::Matrix<int, Eigen::Dynamic, 3> &Handle_Seams,
+                         Eigen::PlainObjectBase<DerivedU> &UV,
+                         Eigen::PlainObjectBase<DerivedF> &FUV,
+                         double GradientSize = 30.0,
+                         double Stiffness = 5.0,
+                         bool DirectRound = false,
+                         int iter = 5,
+                         int localIter = 5,
+                         bool DoRound = true,
+                         bool SingularityRound=true,
+                         std::vector<int> roundVertices = std::vector<int>(),
+                         std::vector<std::vector<int> > hardFeatures = std::vector<std::vector<int> >());
 
 
     IGL_INLINE void extractUV(Eigen::PlainObjectBase<DerivedU> &UV_out,
-                   Eigen::PlainObjectBase<DerivedF> &FUV_out);
+                              Eigen::PlainObjectBase<DerivedF> &FUV_out);
 
   private:
     IGL_INLINE int NumFlips(const Eigen::MatrixXd& WUV);
@@ -575,20 +585,21 @@ namespace igl {
     IGL_INLINE bool updateStiffeningJacobianDistorsion(double grad_size, const Eigen::MatrixXd& WUV);
 
     IGL_INLINE bool IsFlipped(const Eigen::Vector2d &uv0,
-                          const Eigen::Vector2d &uv1,
-                          const Eigen::Vector2d &uv2);
+                              const Eigen::Vector2d &uv1,
+                              const Eigen::Vector2d &uv2);
 
     IGL_INLINE bool IsFlipped(const int i, const Eigen::MatrixXd& WUV);
 
   };
 };
+}
 
-IGL_INLINE igl::SeamInfo::SeamInfo(int _v0,
-                        int _v1,
-                        int _v0p,
-                        int _v1p,
-                        int _MMatch,
-                        int _integerVar)
+IGL_INLINE igl::comiso::SeamInfo::SeamInfo(int _v0,
+                                   int _v1,
+                                   int _v0p,
+                                   int _v1p,
+                                   int _MMatch,
+                                   int _integerVar)
 {
   v0=_v0;
   v1=_v1;
@@ -598,7 +609,7 @@ IGL_INLINE igl::SeamInfo::SeamInfo(int _v0,
   MMatch=_MMatch;
 }
 
-IGL_INLINE igl::SeamInfo::SeamInfo(const SeamInfo &S1)
+IGL_INLINE igl::comiso::SeamInfo::SeamInfo(const SeamInfo &S1)
 {
   v0=S1.v0;
   v1=S1.v1;
@@ -610,30 +621,32 @@ IGL_INLINE igl::SeamInfo::SeamInfo(const SeamInfo &S1)
 
 
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE igl::VertexIndexing<DerivedV, DerivedF>::VertexIndexing(const Eigen::PlainObjectBase<DerivedV> &_V,
-                                                        const Eigen::PlainObjectBase<DerivedF> &_F,
-                                                        const Eigen::PlainObjectBase<DerivedF> &_TT,
-                                                        const Eigen::PlainObjectBase<DerivedF> &_TTi,
-                                                        const Eigen::PlainObjectBase<DerivedV> &_PD1,
-                                                        const Eigen::PlainObjectBase<DerivedV> &_PD2,
-                                                        const Eigen::Matrix<int, Eigen::Dynamic, 3> &_Handle_MMatch,
-                                                        const Eigen::Matrix<int, Eigen::Dynamic, 1> &_Handle_Singular,
-                                                        const Eigen::Matrix<int, Eigen::Dynamic, 1> &_Handle_SingularDegree,
-                                                        const Eigen::Matrix<int, Eigen::Dynamic, 3> &_Handle_Seams
+IGL_INLINE igl::comiso::VertexIndexing<DerivedV, DerivedF>::VertexIndexing(const Eigen::PlainObjectBase<DerivedV> &_V,
+                                                                   const Eigen::PlainObjectBase<DerivedF> &_F,
+                                                                   const Eigen::PlainObjectBase<DerivedF> &_TT,
+                                                                   const Eigen::PlainObjectBase<DerivedF> &_TTi,
+                                                                   // const Eigen::PlainObjectBase<DerivedV> &_PD1,
+                                                                   // const Eigen::PlainObjectBase<DerivedV> &_PD2,
+                                                                   const Eigen::Matrix<int, Eigen::Dynamic, 3> &_Handle_MMatch,
+                                                                   // const Eigen::Matrix<int, Eigen::Dynamic, 1> &_Handle_Singular,
+                                                                   // const Eigen::Matrix<int, Eigen::Dynamic, 1> &_Handle_SingularDegree,
+                                                                   const Eigen::Matrix<int, Eigen::Dynamic, 3> &_Handle_Seams
 
-                                                        ):
+                                                                   ):
 V(_V),
 F(_F),
 TT(_TT),
 TTi(_TTi),
-PD1(_PD1),
-PD2(_PD2),
+// PD1(_PD1),
+// PD2(_PD2),
 Handle_MMatch(_Handle_MMatch),
-Handle_Singular(_Handle_Singular),
-Handle_SingularDegree(_Handle_SingularDegree),
+// Handle_Singular(_Handle_Singular),
+// Handle_SingularDegree(_Handle_SingularDegree),
 Handle_Seams(_Handle_Seams)
 {
-
+  #ifdef DEBUG_PRINT
+  cerr<<igl::matlab_format(Handle_Seams,"Handle_Seams");
+#endif
   V_border = igl::is_border_vertex(V,F);
   igl::vertex_triangle_adjacency(V,F,VF,VFi);
 
@@ -653,14 +666,14 @@ Handle_Seams(_Handle_Seams)
 }
 
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::FirstPos(const int v, int &f, int &edge)
+IGL_INLINE void igl::comiso::VertexIndexing<DerivedV, DerivedF>::FirstPos(const int v, int &f, int &edge)
 {
   f    = VF[v][0];  // f=v->cVFp();
   edge = VFi[v][0]; // edge=v->cVFi();
 }
 
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE int igl::VertexIndexing<DerivedV, DerivedF>::AddNewIndex(const int v0)
+IGL_INLINE int igl::comiso::VertexIndexing<DerivedV, DerivedF>::AddNewIndex(const int v0)
 {
   Handle_SystemInfo.num_scalar_variables++;
   HandleV_Integer[v0].push_back(Handle_SystemInfo.num_scalar_variables);
@@ -669,7 +682,7 @@ IGL_INLINE int igl::VertexIndexing<DerivedV, DerivedF>::AddNewIndex(const int v0
 }
 
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE bool igl::VertexIndexing<DerivedV, DerivedF>::HasIndex(int indexVert,int indexVar)
+IGL_INLINE bool igl::comiso::VertexIndexing<DerivedV, DerivedF>::HasIndex(int indexVert,int indexVar)
 {
   for (unsigned int i=0;i<HandleV_Integer[indexVert].size();i++)
     if (HandleV_Integer[indexVert][i]==indexVar)return true;
@@ -677,13 +690,13 @@ IGL_INLINE bool igl::VertexIndexing<DerivedV, DerivedF>::HasIndex(int indexVert,
 }
 
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::GetSeamInfo(const int f0,
-                                                          const int f1,
-                                                          const int indexE,
-                                                          int &v0,int &v1,
-                                                          int &v0p,int &v1p,
-                                                          unsigned char &_MMatch,
-                                                          int &integerVar)
+IGL_INLINE void igl::comiso::VertexIndexing<DerivedV, DerivedF>::GetSeamInfo(const int f0,
+                                                                     const int f1,
+                                                                     const int indexE,
+                                                                     int &v0,int &v1,
+                                                                     int &v0p,int &v1p,
+                                                                     unsigned char &_MMatch,
+                                                                     int &integerVar)
 {
   int edgef0 = indexE;
   v0 = HandleS_Index(f0,edgef0);
@@ -701,7 +714,7 @@ IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::GetSeamInfo(const int f
 }
 
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE bool igl::VertexIndexing<DerivedV, DerivedF>::IsSeam(const int f0, const int f1)
+IGL_INLINE bool igl::comiso::VertexIndexing<DerivedV, DerivedF>::IsSeam(const int f0, const int f1)
 {
   for (int i=0;i<3;i++)
   {
@@ -720,15 +733,18 @@ IGL_INLINE bool igl::VertexIndexing<DerivedV, DerivedF>::IsSeam(const int f0, co
 ///find initial position of the pos to
 // assing face to vert inxex correctly
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::FindInitialPos(const int vert,
-                                                             int &edge,
-                                                             int &face)
+IGL_INLINE void igl::comiso::VertexIndexing<DerivedV, DerivedF>::FindInitialPos(const int vert,
+                                                                        int &edge,
+                                                                        int &face)
 {
   int f_init;
   int edge_init;
   FirstPos(vert,f_init,edge_init); // todo manually IGL_INLINE the function
   igl::HalfEdgeIterator<DerivedF> VFI(&F,&TT,&TTi,f_init,edge_init);
 
+#ifdef DEBUG_PRINT
+  cerr<<"--FindInitialPos--"<<endl;
+#endif
   bool vertexB = V_border[vert];
   bool possible_split=false;
   bool complete_turn=false;
@@ -736,27 +752,51 @@ IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::FindInitialPos(const in
   {
     int curr_f = VFI.Fi();
     int curr_edge=VFI.Ei();
+#ifdef DEBUG_PRINT
+    cerr<<"@ face "<<curr_f<<", edge "<< F(curr_f,curr_edge)<<" - "<< F(curr_f,(curr_edge+1)%3)<<endl;
+#endif
     VFI.NextFE();
     int next_f=VFI.Fi();
+#ifdef DEBUG_PRINT
+    cerr<<"next face "<<next_f<<", edge "<< F(next_f,VFI.Ei())<<" - "<< F(next_f,(VFI.Ei()+1)%3)<<endl;
+#endif
     ///test if I've just crossed a border
     bool on_border=(TT(curr_f,curr_edge)==-1);
+#ifdef DEBUG_PRINT
+    cerr<<"on_border: "<<on_border<<endl;
+#endif
     //bool mismatch=false;
     bool seam=false;
 
+    #ifdef DEBUG_PRINT
+    cerr<<igl::matlab_format(Handle_Seams,"Handle_Seams");
+    #endif
     ///or if I've just crossed a seam
     ///if I'm on a border I MUST start from the one next t othe border
     if (!vertexB)
       //seam=curr_f->IsSeam(next_f);
       seam=IsSeam(curr_f,next_f);
-    if (vertexB)
-      assert(!Handle_Singular(vert));
-    ;
+    // if (vertexB)
+    // assert(!Handle_Singular(vert));
+    // ;
     //assert(!vert->IsSingular());
+#ifdef DEBUG_PRINT
+    cerr<<"seam: "<<seam<<endl;
+#endif
     possible_split=((on_border)||(seam));
+#ifdef DEBUG_PRINT
+    cerr<<"possible_split: "<<possible_split<<endl;
+#endif
     complete_turn = next_f == f_init;
+#ifdef DEBUG_PRINT
+    cerr<<"complete_turn: "<<complete_turn<<endl;
+#endif
   } while ((!possible_split)&&(!complete_turn));
   face=VFI.Fi();
   edge=VFI.Ei();
+#ifdef DEBUG_PRINT
+  cerr<<"FindInitialPos done. Face: "<<face<<", edge: "<< F(face,edge)<<" - "<< F(face,(edge+1)%3)<<endl;
+#endif
   ///test that is not on a border
   //assert(face->FFp(edge)!=face);
 }
@@ -766,14 +806,20 @@ IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::FindInitialPos(const in
 ///intialize the mapping given an initial pos
 ///whih must be initialized with FindInitialPos
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::MapIndexes(const int  vert,
-                                                         const int edge_init,
-                                                         const int f_init)
+IGL_INLINE void igl::comiso::VertexIndexing<DerivedV, DerivedF>::MapIndexes(const int  vert,
+                                                                    const int edge_init,
+                                                                    const int f_init)
 {
   ///check that is not on border..
   ///in such case maybe it's non manyfold
   ///insert an initial index
   int curr_index=AddNewIndex(vert);
+#ifdef DEBUG_PRINT
+  cerr<<"--MapIndexes--"<<endl;
+#endif
+#ifdef DEBUG_PRINT
+  cerr<<"adding vertex for "<<vert<<endl;
+#endif
   ///and initialize the jumping pos
   igl::HalfEdgeIterator<DerivedF> VFI(&F,&TT,&TTi,f_init,edge_init);
   bool complete_turn=false;
@@ -781,12 +827,24 @@ IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::MapIndexes(const int  v
   {
     int curr_f = VFI.Fi();
     int curr_edge = VFI.Ei();
+#ifdef DEBUG_PRINT
+    cerr<<"Adding vertex "<<curr_index<<" to face "<<curr_f<<", edge "<< F(curr_f,curr_edge)<<" - "<< F(curr_f,(curr_edge+1)%3)<<endl;
+#endif
     ///assing the current index
     HandleS_Index(curr_f,curr_edge) = curr_index;
+#ifdef DEBUG_PRINT
+    cerr<<igl::matlab_format(HandleS_Index,"HandleS_Index")<<endl;
+#endif
     VFI.NextFE();
     int next_f = VFI.Fi();
+#ifdef DEBUG_PRINT
+    cerr<<"next face "<<next_f<<", edge "<< F(next_f,VFI.Ei())<<" - "<< F(next_f,(VFI.Ei()+1)%3)<<endl;
+#endif
     ///test if I've finiseh with the face exploration
     complete_turn = (next_f==f_init);
+#ifdef DEBUG_PRINT
+    cerr<<"complete_turn: "<<complete_turn<<endl;
+#endif
     ///or if I've just crossed a mismatch
     if (!complete_turn)
     {
@@ -797,6 +855,9 @@ IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::MapIndexes(const int  v
       {
         ///then add a new index
         curr_index=AddNewIndex(vert);
+#ifdef DEBUG_PRINT
+        cerr<<"Found a seam, adding vertex for "<<vert<<endl;
+#endif
       }
     }
   } while (!complete_turn);
@@ -804,7 +865,7 @@ IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::MapIndexes(const int  v
 
 ///intialize the mapping for a given vertex
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::InitMappingSeam(const int vert)
+IGL_INLINE void igl::comiso::VertexIndexing<DerivedV, DerivedF>::InitMappingSeam(const int vert)
 {
   ///first rotate until find the first pos after a mismatch
   ///or a border or return to the first position...
@@ -815,13 +876,16 @@ IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::InitMappingSeam(const i
 
   int edge_init;
   int face_init;
+#ifdef DEBUG_PRINT
+  cerr<<"---Vertex: "<<vert<<"---"<<endl;
+#endif
   FindInitialPos(vert,edge_init,face_init);
   MapIndexes(vert,edge_init,face_init);
 }
 
 ///intialize the mapping for a given sampled mesh
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::InitMappingSeam()
+IGL_INLINE void igl::comiso::VertexIndexing<DerivedV, DerivedF>::InitMappingSeam()
 {
   //num_scalar_variables=-1;
   Handle_SystemInfo.num_scalar_variables=-1;
@@ -838,7 +902,7 @@ IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::InitMappingSeam()
 
 ///test consistency of face variables per vert mapping
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::TestSeamMappingFace(const int f)
+IGL_INLINE void igl::comiso::VertexIndexing<DerivedV, DerivedF>::TestSeamMappingFace(const int f)
 {
   for (int k=0;k<3;k++)
   {
@@ -851,7 +915,7 @@ IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::TestSeamMappingFace(con
 
 ///test consistency of face variables per vert mapping
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::TestSeamMappingVertex(int indexVert)
+IGL_INLINE void igl::comiso::VertexIndexing<DerivedV, DerivedF>::TestSeamMappingVertex(int indexVert)
 {
   for (unsigned int k=0;k<HandleV_Integer[indexVert].size();k++)
   {
@@ -878,7 +942,7 @@ IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::TestSeamMappingVertex(i
 
 ///check consistency of variable mapping across seams
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::TestSeamMapping()
+IGL_INLINE void igl::comiso::VertexIndexing<DerivedV, DerivedF>::TestSeamMapping()
 {
   printf("\n TESTING SEAM INDEXES \n");
   ///test F-V mapping
@@ -894,7 +958,7 @@ IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::TestSeamMapping()
 
 ///vertex to variable mapping
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::InitMapping()
+IGL_INLINE void igl::comiso::VertexIndexing<DerivedV, DerivedF>::InitMapping()
 {
   //use_direction_field=_use_direction_field;
 
@@ -910,7 +974,7 @@ IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::InitMapping()
 }
 
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::InitFaceIntegerVal()
+IGL_INLINE void igl::comiso::VertexIndexing<DerivedV, DerivedF>::InitFaceIntegerVal()
 {
   Handle_SystemInfo.num_integer_cuts=0;
   for (unsigned int j=0;j<F.rows();j++)
@@ -930,7 +994,7 @@ IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::InitFaceIntegerVal()
 
 
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::InitSeamInfo()
+IGL_INLINE void igl::comiso::VertexIndexing<DerivedV, DerivedF>::InitSeamInfo()
 {
   Handle_SystemInfo.EdgeSeamInfo.clear();
   for (unsigned int f0=0;f0<F.rows();f0++)
@@ -958,15 +1022,15 @@ IGL_INLINE void igl::VertexIndexing<DerivedV, DerivedF>::InitSeamInfo()
 
 
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::SolvePoisson(Eigen::VectorXd Stiffness,
-                                                          double vector_field_scale,
-                                                          double grid_res,
-                                                          bool direct_round,
-                                                          int localIter,
-                                                          bool _integer_rounding,
-                                                          bool _singularity_rounding,
-                                                          std::vector<int> roundVertices,
-                                                          std::vector<std::vector<int> > hardFeatures)
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::SolvePoisson(Eigen::VectorXd Stiffness,
+                                                                     double vector_field_scale,
+                                                                     double grid_res,
+                                                                     bool direct_round,
+                                                                     int localIter,
+                                                                     bool _integer_rounding,
+                                                                     bool _singularity_rounding,
+                                                                     std::vector<int> roundVertices,
+                                                                     std::vector<std::vector<int> > hardFeatures)
 {
   Handle_Stiffness = Stiffness;
 
@@ -1006,11 +1070,11 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::SolvePoisson(Eigen::Vect
   if (DEBUGPRINT)
     printf("\n BUILT THE MATRIX \n");
 
-  if (integer_rounding)    
+  if (integer_rounding)
     AddToRoundVertices(roundVertices);
 
   if (_singularity_rounding)
-      AddSingularityRound();
+    AddSingularityRound();
 
   int t1=clock();
   if (DEBUGPRINT) printf("\n time:%d \n",t1-t0);
@@ -1030,7 +1094,7 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::SolvePoisson(Eigen::Vect
 }
 
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE igl::PoissonSolver<DerivedV, DerivedF>
+IGL_INLINE igl::comiso::PoissonSolver<DerivedV, DerivedF>
 ::PoissonSolver(const Eigen::PlainObjectBase<DerivedV> &_V,
                 const Eigen::PlainObjectBase<DerivedF> &_F,
                 const Eigen::PlainObjectBase<DerivedF> &_TT,
@@ -1062,9 +1126,9 @@ Handle_SystemInfo(_Handle_SystemInfo)
 ///START SYSTEM ACCESS METHODS
 ///add an entry to the LHS
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::AddValA(int Xindex,
-                                                     int Yindex,
-                                                     double val)
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::AddValA(int Xindex,
+                                                                int Yindex,
+                                                                double val)
 {
   int size=(int)S.nrows();
   assert(0 <= Xindex && Xindex < size);
@@ -1074,9 +1138,9 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::AddValA(int Xindex,
 
 ///add a complex entry to the LHS
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::AddComplexA(int VarXindex,
-                                                         int VarYindex,
-                                                         std::complex<double> val)
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::AddComplexA(int VarXindex,
+                                                                    int VarYindex,
+                                                                    std::complex<double> val)
 {
   int size=(int)S.nrows()/2;
   assert(0 <= VarXindex && VarXindex < size);
@@ -1086,8 +1150,8 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::AddComplexA(int VarXinde
 
 ///add a velue to the RHS
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::AddValB(int Xindex,
-                                                     double val)
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::AddValB(int Xindex,
+                                                                double val)
 {
   int size=(int)S.nrows();
   assert(0 <= Xindex && Xindex < size);
@@ -1097,7 +1161,7 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::AddValB(int Xindex,
 ///add the area term, scalefactor is used to sum up
 ///and normalize on the overlap zones
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::AddAreaTerm(int index[3][3][2],double ScaleFactor)
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::AddAreaTerm(int index[3][3][2],double ScaleFactor)
 {
   const double entry = 0.5*ScaleFactor;
   double val[3][3]= {
@@ -1121,7 +1185,7 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::AddAreaTerm(int index[3]
 ///set the diagonal of the matrix (which is zero at the beginning)
 ///such that the sum of a row or a colums is zero
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::SetDiagonal(double val[3][3])
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::SetDiagonal(double val[3][3])
 {
   for (int i=0;i<3;i++)
   {
@@ -1136,8 +1200,8 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::SetDiagonal(double val[3
 ///a vector of indexes add such values
 ///as specified by the indexes
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::AddRHS(double b[6],
-                                                    int index[3])
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::AddRHS(double b[6],
+                                                               int index[3])
 {
   for (int i=0;i<3;i++)
   {
@@ -1152,7 +1216,7 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::AddRHS(double b[6],
 ///indexes are specified in the 3x3 matrix of x,y pairs
 ///indexes must be multiplied by 2 cause u and v
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::Add33Block(double val[3][3], int index[3][3][2])
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::Add33Block(double val[3][3], int index[3][3][2])
 {
   for (int i=0;i<3;i++)
     for (int j=0;j<3;j++)
@@ -1171,7 +1235,7 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::Add33Block(double val[3]
 ///indexes are specified in the 3x3 matrix of x,y pairs
 ///indexes must be multiplied by 2 cause u and v
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::Add44Block(double val[4][4],int index[4][4][2])
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::Add44Block(double val[4][4],int index[4][4][2])
 {
   for (int i=0;i<4;i++)
     for (int j=0;j<4;j++)
@@ -1191,7 +1255,7 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::Add44Block(double val[4]
 ///return the complex encoding the rotation
 ///for a given missmatch interval
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE std::complex<double> igl::PoissonSolver<DerivedV, DerivedF>::GetRotationComplex(int interval)
+IGL_INLINE std::complex<double> igl::comiso::PoissonSolver<DerivedV, DerivedF>::GetRotationComplex(int interval)
 {
   assert((interval>=0)&&(interval<4));
 
@@ -1211,9 +1275,9 @@ IGL_INLINE std::complex<double> igl::PoissonSolver<DerivedV, DerivedF>::GetRotat
 ///initialize the LHS for a given face
 ///for minimization of Dirichlet's energy
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::perElementLHS(int f,
-                                                           double val[3][3],
-                                                           int index[3][3][2])
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::perElementLHS(int f,
+                                                                      double val[3][3],
+                                                                      int index[3][3][2])
 {
   ///initialize to zero
   for (int x=0;x<3;x++)
@@ -1266,9 +1330,9 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::perElementLHS(int f,
 ///initialize the RHS for a given face
 ///for minimization of Dirichlet's energy
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::perElementRHS(int f,
-                                                           double b[6],
-                                                           double vector_field_scale)
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::perElementRHS(int f,
+                                                                      double b[6],
+                                                                      double vector_field_scale)
 {
 
   /// then set the rhs
@@ -1333,11 +1397,11 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::perElementRHS(int f,
 ///evaluate the LHS and RHS for a single face
 ///for minimization of Dirichlet's energy
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::PerElementSystemReal(int f,
-                                                                  double val[3][3],
-                                                                  int index[3][3][2],
-                                                                  double b[6],
-                                                                  double vector_field_scale)
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::PerElementSystemReal(int f,
+                                                                             double val[3][3],
+                                                                             int index[3][3][2],
+                                                                             double b[6],
+                                                                             double vector_field_scale)
 {
   perElementLHS(f,val,index);
   perElementRHS(f,b,vector_field_scale);
@@ -1347,7 +1411,7 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::PerElementSystemReal(int
 ///START FIXING VERTICES
 ///set a given vertex as fixed
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::AddFixedVertex(int v)
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::AddFixedVertex(int v)
 {
   n_fixed_vars++;
   Hard_constraints.push_back(v);
@@ -1356,12 +1420,12 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::AddFixedVertex(int v)
 ///find vertex to fix in case we're using
 ///a vector field NB: multiple components not handled
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::FindFixedVertField()
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::FindFixedVertField()
 {
   Hard_constraints.clear();
 
   n_fixed_vars=0;
-  ///fix the first singularity
+  //fix the first singularity
   for (unsigned int v=0;v<V.rows();v++)
   {
     if (Handle_Singular(v))
@@ -1381,21 +1445,21 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::FindFixedVertField()
 ///find hard constraint depending if using or not
 ///a vector field
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::FindFixedVert()
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::FindFixedVert()
 {
   Hard_constraints.clear();
   FindFixedVertField();
 }
 
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE int igl::PoissonSolver<DerivedV, DerivedF>::GetFirstVertexIndex(int v)
+IGL_INLINE int igl::comiso::PoissonSolver<DerivedV, DerivedF>::GetFirstVertexIndex(int v)
 {
   return HandleS_Index(VF[v][0],VFi[v][0]);
 }
 
 ///fix the vertices which are flagged as fixed
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::FixBlockedVertex()
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::FixBlockedVertex()
 {
   int offset_row = n_vert_vars*2 + num_cut_constraint*2;
 
@@ -1432,7 +1496,7 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::FixBlockedVertex()
 ///HANDLING SINGULARITY
 //set the singularity round to integer location
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::AddSingularityRound()
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::AddSingularityRound()
 {
   for (unsigned int v=0;v<V.rows();v++)
   {
@@ -1446,7 +1510,7 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::AddSingularityRound()
 }
 
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::AddToRoundVertices(std::vector<int> ids)
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::AddToRoundVertices(std::vector<int> ids)
 {
   for (size_t i = 0; i < ids.size(); ++i)
   {
@@ -1462,7 +1526,7 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::AddToRoundVertices(std::
 //build the laplacian matrix cyclyng over all rangemaps
 //and over all faces
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::BuildLaplacianMatrix(double vfscale)
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::BuildLaplacianMatrix(double vfscale)
 {
   ///then for each face
   for (unsigned int f=0;f<F.rows();f++)
@@ -1492,7 +1556,7 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::BuildLaplacianMatrix(dou
 
 ///find different sized of the system
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::FindSizes()
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::FindSizes()
 {
   ///find the vertex that need to be fixed
   FindFixedVert();
@@ -1537,7 +1601,7 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::FindSizes()
 }
 
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::AllocateSystem()
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::AllocateSystem()
 {
   S.initialize(system_size, system_size);
   printf("\n INITIALIZED SPARSE MATRIX OF %d x %d \n",system_size, system_size);
@@ -1545,7 +1609,7 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::AllocateSystem()
 
 ///intitialize the whole matrix
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::InitMatrix()
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::InitMatrix()
 {
   FindSizes();
   AllocateSystem();
@@ -1554,7 +1618,7 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::InitMatrix()
 ///map back coordinates after that
 ///the system has been solved
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::MapCoords()
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::MapCoords()
 {
   ///map coords to faces
   for (unsigned int f=0;f<F.rows();f++)
@@ -1595,7 +1659,7 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::MapCoords()
 
 ///set the constraints for the inter-range cuts
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::BuildSeamConstraintsExplicitTranslation()
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::BuildSeamConstraintsExplicitTranslation()
 {
   ///add constraint(s) for every seam edge (not halfedge)
   int offset_row = n_vert_vars;
@@ -1656,7 +1720,7 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::BuildSeamConstraintsExpl
 
 ///set the constraints for the inter-range cuts
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::BuildUserDefinedConstraints()
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::BuildUserDefinedConstraints()
 {
   /// the user defined constraints are at the end
   int offset_row = n_vert_vars*2 + num_cut_constraint*2 + n_fixed_vars*2;
@@ -1681,9 +1745,9 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::BuildUserDefinedConstrai
 
 ///call of the mixed integer solver
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::MixedIntegerSolve(double cone_grid_res,
-                                                               bool direct_round,
-                                                               int localIter)
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::MixedIntegerSolve(double cone_grid_res,
+                                                                          bool direct_round,
+                                                                          int localIter)
 {
   X = std::vector<double>((n_vert_vars+n_integer_vars)*2);
 
@@ -1781,14 +1845,14 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::MixedIntegerSolve(double
 }
 
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::clearUserConstraint()
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::clearUserConstraint()
 {
   num_userdefined_constraint = 0;
   userdefined_constraints.clear();
 }
 
 template <typename DerivedV, typename DerivedF>
-IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::addSharpEdgeConstraint(int fid, int vid)
+IGL_INLINE void igl::comiso::PoissonSolver<DerivedV, DerivedF>::addSharpEdgeConstraint(int fid, int vid)
 {
   // prepare constraint
   std::vector<int> c(Handle_SystemInfo.num_vert_variables*2 + 1);
@@ -1831,27 +1895,27 @@ IGL_INLINE void igl::PoissonSolver<DerivedV, DerivedF>::addSharpEdgeConstraint(i
 
 
 template <typename DerivedV, typename DerivedF, typename DerivedU>
-IGL_INLINE igl::MIQ_class<DerivedV, DerivedF, DerivedU>::MIQ_class(const Eigen::PlainObjectBase<DerivedV> &V_,
-                                                        const Eigen::PlainObjectBase<DerivedF> &F_,
-                                                        const Eigen::PlainObjectBase<DerivedV> &PD1_combed,
-                                                        const Eigen::PlainObjectBase<DerivedV> &PD2_combed,
-                                                        const Eigen::PlainObjectBase<DerivedV> &BIS1_combed,
-                                                        const Eigen::PlainObjectBase<DerivedV> &BIS2_combed,
-                                                        const Eigen::Matrix<int, Eigen::Dynamic, 3> &Handle_MMatch,
-                                                        const Eigen::Matrix<int, Eigen::Dynamic, 1> &Handle_Singular,
-                                                        const Eigen::Matrix<int, Eigen::Dynamic, 1> &Handle_SingularDegree,
-                                                        const Eigen::Matrix<int, Eigen::Dynamic, 3> &Handle_Seams,
-                                                        Eigen::PlainObjectBase<DerivedU> &UV,
-                                                        Eigen::PlainObjectBase<DerivedF> &FUV,
-                                                        double GradientSize,
-                                                        double Stiffness,
-                                                        bool DirectRound,
-                                                        int iter,
-                                                        int localIter,
-                                                        bool DoRound,
-                                                        bool SingularityRound,
-                                                        std::vector<int> roundVertices,
-                                                        std::vector<std::vector<int> > hardFeatures):
+IGL_INLINE igl::comiso::MIQ_class<DerivedV, DerivedF, DerivedU>::MIQ_class(const Eigen::PlainObjectBase<DerivedV> &V_,
+                                                                   const Eigen::PlainObjectBase<DerivedF> &F_,
+                                                                   const Eigen::PlainObjectBase<DerivedV> &PD1_combed,
+                                                                   const Eigen::PlainObjectBase<DerivedV> &PD2_combed,
+                                                                   // const Eigen::PlainObjectBase<DerivedV> &BIS1_combed,
+                                                                   // const Eigen::PlainObjectBase<DerivedV> &BIS2_combed,
+                                                                   const Eigen::Matrix<int, Eigen::Dynamic, 3> &Handle_MMatch,
+                                                                   const Eigen::Matrix<int, Eigen::Dynamic, 1> &Handle_Singular,
+                                                                   // const Eigen::Matrix<int, Eigen::Dynamic, 1> &Handle_SingularDegree,
+                                                                   const Eigen::Matrix<int, Eigen::Dynamic, 3> &Handle_Seams,
+                                                                   Eigen::PlainObjectBase<DerivedU> &UV,
+                                                                   Eigen::PlainObjectBase<DerivedF> &FUV,
+                                                                   double GradientSize,
+                                                                   double Stiffness,
+                                                                   bool DirectRound,
+                                                                   int iter,
+                                                                   int localIter,
+                                                                   bool DoRound,
+                                                                   bool SingularityRound,
+                                                                   std::vector<int> roundVertices,
+                                                                   std::vector<std::vector<int> > hardFeatures):
 V(V_),
 F(F_)
 {
@@ -1859,34 +1923,34 @@ F(F_)
   igl::triangle_triangle_adjacency(V,F,TT,TTi);
 
   // Prepare indexing for the linear system
-  VertexIndexing<DerivedV, DerivedF> VInd(V, F, TT, TTi, BIS1_combed, BIS2_combed, Handle_MMatch, Handle_Singular, Handle_SingularDegree, Handle_Seams);
+  VertexIndexing<DerivedV, DerivedF> VInd(V, F, TT, TTi, /*BIS1_combed, BIS2_combed,*/ Handle_MMatch, /*Handle_Singular, Handle_SingularDegree,*/ Handle_Seams);
 
   VInd.InitMapping();
   VInd.InitFaceIntegerVal();
   VInd.InitSeamInfo();
 
-  Eigen::PlainObjectBase<DerivedV> PD1_combed_for_poisson, PD2_combed_for_poisson;
-  // Rotate by 90 degrees CCW
-  PD1_combed_for_poisson.setZero(BIS1_combed.rows(),3);
-  PD2_combed_for_poisson.setZero(BIS2_combed.rows(),3);
-  for (unsigned i=0; i<PD1_combed.rows();++i)
-  {
-    double n1 = PD1_combed.row(i).norm();
-    double n2 = PD2_combed.row(i).norm();
-
-    double a1 = atan2(B2.row(i).dot(PD1_combed.row(i)),B1.row(i).dot(PD1_combed.row(i)));
-    double a2 = atan2(B2.row(i).dot(PD2_combed.row(i)),B1.row(i).dot(PD2_combed.row(i)));
-
-    a1 += M_PI/2;
-    a2 += M_PI/2;
-
-
-    PD1_combed_for_poisson.row(i) = cos(a1) * B1.row(i) + sin(a1) * B2.row(i);
-    PD2_combed_for_poisson.row(i) = cos(a2) * B1.row(i) + sin(a2) * B2.row(i);
-
-    PD1_combed_for_poisson.row(i) = PD1_combed_for_poisson.row(i).normalized() * n1;
-    PD2_combed_for_poisson.row(i) = PD2_combed_for_poisson.row(i).normalized() * n2;
-  }
+  // Eigen::PlainObjectBase<DerivedV> PD1_combed_for_poisson, PD2_combed_for_poisson;
+  // // Rotate by 90 degrees CCW
+  // PD1_combed_for_poisson.setZero(PD1_combed.rows(),3);
+  // PD2_combed_for_poisson.setZero(PD2_combed.rows(),3);
+  // for (unsigned i=0; i<PD1_combed.rows();++i)
+  // {
+  //   double n1 = PD1_combed.row(i).norm();
+  //   double n2 = PD2_combed.row(i).norm();
+  //
+  //   double a1 = atan2(B2.row(i).dot(PD1_combed.row(i)),B1.row(i).dot(PD1_combed.row(i)));
+  //   double a2 = atan2(B2.row(i).dot(PD2_combed.row(i)),B1.row(i).dot(PD2_combed.row(i)));
+  //
+  //   // a1 += M_PI/2;
+  //   // a2 += M_PI/2;
+  //
+  //
+  //   PD1_combed_for_poisson.row(i) = cos(a1) * B1.row(i) + sin(a1) * B2.row(i);
+  //   PD2_combed_for_poisson.row(i) = cos(a2) * B1.row(i) + sin(a2) * B2.row(i);
+  //
+  //   PD1_combed_for_poisson.row(i) = PD1_combed_for_poisson.row(i).normalized() * n1;
+  //   PD2_combed_for_poisson.row(i) = PD2_combed_for_poisson.row(i).normalized() * n2;
+  // }
 
 
   // Assemble the system and solve
@@ -1894,10 +1958,10 @@ F(F_)
                                             F,
                                             TT,
                                             TTi,
-                                            PD1_combed_for_poisson,
-                                            PD2_combed_for_poisson,
+                                            PD1_combed,
+                                            PD2_combed,
                                             VInd.HandleS_Index,
-                                            VInd.Handle_Singular,
+                                            /*VInd.Handle_Singular*/Handle_Singular,
                                             VInd.Handle_SystemInfo);
   Handle_Stiffness = Eigen::VectorXd::Constant(F.rows(),1);
 
@@ -1927,8 +1991,8 @@ F(F_)
 }
 
 template <typename DerivedV, typename DerivedF, typename DerivedU>
-IGL_INLINE void igl::MIQ_class<DerivedV, DerivedF, DerivedU>::extractUV(Eigen::PlainObjectBase<DerivedU> &UV_out,
-                                                             Eigen::PlainObjectBase<DerivedF> &FUV_out)
+IGL_INLINE void igl::comiso::MIQ_class<DerivedV, DerivedF, DerivedU>::extractUV(Eigen::PlainObjectBase<DerivedU> &UV_out,
+                                                                        Eigen::PlainObjectBase<DerivedF> &FUV_out)
 {
   //      int f = F.rows();
   int f = WUV.rows();
@@ -1996,7 +2060,7 @@ IGL_INLINE void igl::MIQ_class<DerivedV, DerivedF, DerivedU>::extractUV(Eigen::P
 }
 
 template <typename DerivedV, typename DerivedF, typename DerivedU>
-IGL_INLINE int igl::MIQ_class<DerivedV, DerivedF, DerivedU>::NumFlips(const Eigen::MatrixXd& WUV)
+IGL_INLINE int igl::comiso::MIQ_class<DerivedV, DerivedF, DerivedU>::NumFlips(const Eigen::MatrixXd& WUV)
 {
   int numFl=0;
   for (unsigned int i=0;i<F.rows();i++)
@@ -2008,7 +2072,7 @@ IGL_INLINE int igl::MIQ_class<DerivedV, DerivedF, DerivedU>::NumFlips(const Eige
 }
 
 template <typename DerivedV, typename DerivedF, typename DerivedU>
-IGL_INLINE double igl::MIQ_class<DerivedV, DerivedF, DerivedU>::Distortion(int f, double h, const Eigen::MatrixXd& WUV)
+IGL_INLINE double igl::comiso::MIQ_class<DerivedV, DerivedF, DerivedU>::Distortion(int f, double h, const Eigen::MatrixXd& WUV)
 {
   assert(h > 0);
 
@@ -2096,7 +2160,7 @@ IGL_INLINE double igl::MIQ_class<DerivedV, DerivedF, DerivedU>::Distortion(int f
 //  @return     distortion laplacian for f
 ///////////////////////////////////////////////////////////////////////////
 template <typename DerivedV, typename DerivedF, typename DerivedU>
-IGL_INLINE double igl::MIQ_class<DerivedV, DerivedF, DerivedU>::LaplaceDistortion(const int f, double h, const Eigen::MatrixXd& WUV)
+IGL_INLINE double igl::comiso::MIQ_class<DerivedV, DerivedF, DerivedU>::LaplaceDistortion(const int f, double h, const Eigen::MatrixXd& WUV)
 {
   double mydist = Distortion(f, h, WUV);
   double lapl=0;
@@ -2109,7 +2173,7 @@ IGL_INLINE double igl::MIQ_class<DerivedV, DerivedF, DerivedU>::LaplaceDistortio
 }
 
 template <typename DerivedV, typename DerivedF, typename DerivedU>
-IGL_INLINE bool igl::MIQ_class<DerivedV, DerivedF, DerivedU>::updateStiffeningJacobianDistorsion(double grad_size, const Eigen::MatrixXd& WUV)
+IGL_INLINE bool igl::comiso::MIQ_class<DerivedV, DerivedF, DerivedU>::updateStiffeningJacobianDistorsion(double grad_size, const Eigen::MatrixXd& WUV)
 {
   bool flipped = NumFlips(WUV)>0;
 
@@ -2145,9 +2209,9 @@ IGL_INLINE bool igl::MIQ_class<DerivedV, DerivedF, DerivedU>::updateStiffeningJa
 }
 
 template <typename DerivedV, typename DerivedF, typename DerivedU>
-IGL_INLINE bool igl::MIQ_class<DerivedV, DerivedF, DerivedU>::IsFlipped(const Eigen::Vector2d &uv0,
-                                                                    const Eigen::Vector2d &uv1,
-                                                                    const Eigen::Vector2d &uv2)
+IGL_INLINE bool igl::comiso::MIQ_class<DerivedV, DerivedF, DerivedU>::IsFlipped(const Eigen::Vector2d &uv0,
+                                                                        const Eigen::Vector2d &uv1,
+                                                                        const Eigen::Vector2d &uv2)
 {
   Eigen::Vector2d e0 = (uv1-uv0);
   Eigen::Vector2d e1 = (uv2-uv0);
@@ -2157,7 +2221,8 @@ IGL_INLINE bool igl::MIQ_class<DerivedV, DerivedF, DerivedU>::IsFlipped(const Ei
 }
 
 template <typename DerivedV, typename DerivedF, typename DerivedU>
-IGL_INLINE bool igl::MIQ_class<DerivedV, DerivedF, DerivedU>::IsFlipped(const int i, const Eigen::MatrixXd& WUV)
+IGL_INLINE bool igl::comiso::MIQ_class<DerivedV, DerivedF, DerivedU>::IsFlipped(
+  const int i, const Eigen::MatrixXd& WUV)
 {
   Eigen::Vector2d uv0,uv1,uv2;
   uv0 << WUV(i,0), WUV(i,1);
@@ -2171,79 +2236,81 @@ IGL_INLINE bool igl::MIQ_class<DerivedV, DerivedF, DerivedU>::IsFlipped(const in
 
 
 template <typename DerivedV, typename DerivedF, typename DerivedU>
-IGL_INLINE void igl::miq(const Eigen::PlainObjectBase<DerivedV> &V,
-                         const Eigen::PlainObjectBase<DerivedF> &F,
-                         const Eigen::PlainObjectBase<DerivedV> &PD1_combed,
-                         const Eigen::PlainObjectBase<DerivedV> &PD2_combed,
-                         const Eigen::PlainObjectBase<DerivedV> &BIS1_combed,
-                         const Eigen::PlainObjectBase<DerivedV> &BIS2_combed,
-                         const Eigen::Matrix<int, Eigen::Dynamic, 3> &Handle_MMatch,
-                         const Eigen::Matrix<int, Eigen::Dynamic, 1> &Handle_Singular,
-                         const Eigen::Matrix<int, Eigen::Dynamic, 1> &Handle_SingularDegree,
-                         const Eigen::Matrix<int, Eigen::Dynamic, 3> &Handle_Seams,
-                         Eigen::PlainObjectBase<DerivedU> &UV,
-                         Eigen::PlainObjectBase<DerivedF> &FUV,
-                         double GradientSize,
-                         double Stiffness,
-                         bool DirectRound,
-                         int iter,
-                         int localIter,
-                         bool DoRound,
-                         bool SingularityRound,
-                         std::vector<int> roundVertices,
-                         std::vector<std::vector<int> > hardFeatures)
+IGL_INLINE void igl::comiso::miq(
+  const Eigen::PlainObjectBase<DerivedV> &V,
+  const Eigen::PlainObjectBase<DerivedF> &F,
+  const Eigen::PlainObjectBase<DerivedV> &PD1_combed,
+  const Eigen::PlainObjectBase<DerivedV> &PD2_combed,
+  //  const Eigen::PlainObjectBase<DerivedV> &BIS1_combed,
+  //  const Eigen::PlainObjectBase<DerivedV> &BIS2_combed,
+  const Eigen::Matrix<int, Eigen::Dynamic, 3> &Handle_MMatch,
+  const Eigen::Matrix<int, Eigen::Dynamic, 1> &Handle_Singular,
+  //  const Eigen::Matrix<int, Eigen::Dynamic, 1> &Handle_SingularDegree,
+  const Eigen::Matrix<int, Eigen::Dynamic, 3> &Handle_Seams,
+  Eigen::PlainObjectBase<DerivedU> &UV,
+  Eigen::PlainObjectBase<DerivedF> &FUV,
+  double GradientSize,
+  double Stiffness,
+  bool DirectRound,
+  int iter,
+  int localIter,
+  bool DoRound,
+  bool SingularityRound,
+  std::vector<int> roundVertices,
+  std::vector<std::vector<int> > hardFeatures)
 {
   GradientSize = GradientSize/(V.colwise().maxCoeff()-V.colwise().minCoeff()).norm();
 
-  igl::MIQ_class<DerivedV, DerivedF, DerivedU> miq(V,
-                                                   F,
-                                                   PD1_combed,
-                                                   PD2_combed,
-                                                   BIS1_combed,
-                                                   BIS2_combed,
-                                                   Handle_MMatch,
-                                                   Handle_Singular,
-                                                   Handle_SingularDegree,
-                                                   Handle_Seams,
-                                                   UV,
-                                                   FUV,
-                                                   GradientSize,
-                                                   Stiffness,
-                                                   DirectRound,
-                                                   iter,
-                                                   localIter,
-                                                   DoRound,
-                                                   SingularityRound,
-                                                   roundVertices,
-                                                   hardFeatures);
+  igl::comiso::MIQ_class<DerivedV, DerivedF, DerivedU> miq(V,
+    F,
+    PD1_combed,
+    PD2_combed,
+    //  BIS1_combed,
+    //  BIS2_combed,
+    Handle_MMatch,
+    Handle_Singular,
+    //  Handle_SingularDegree,
+    Handle_Seams,
+    UV,
+    FUV,
+    GradientSize,
+    Stiffness,
+    DirectRound,
+    iter,
+    localIter,
+    DoRound,
+    SingularityRound,
+    roundVertices,
+    hardFeatures);
 
   miq.extractUV(UV,FUV);
 }
 
 template <typename DerivedV, typename DerivedF, typename DerivedU>
-IGL_INLINE void igl::miq(const Eigen::PlainObjectBase<DerivedV> &V,
-                         const Eigen::PlainObjectBase<DerivedF> &F,
-                         const Eigen::PlainObjectBase<DerivedV> &PD1,
-                         const Eigen::PlainObjectBase<DerivedV> &PD2,
-                         Eigen::PlainObjectBase<DerivedU> &UV,
-                         Eigen::PlainObjectBase<DerivedF> &FUV,
-                         double GradientSize,
-                         double Stiffness,
-                         bool DirectRound,
-                         int iter,
-                         int localIter,
-                         bool DoRound,
-                         bool SingularityRound,
-                         std::vector<int> roundVertices,
-                         std::vector<std::vector<int> > hardFeatures)
+IGL_INLINE void igl::comiso::miq(
+    const Eigen::PlainObjectBase<DerivedV> &V,
+    const Eigen::PlainObjectBase<DerivedF> &F,
+    const Eigen::PlainObjectBase<DerivedV> &PD1,
+    const Eigen::PlainObjectBase<DerivedV> &PD2,
+    Eigen::PlainObjectBase<DerivedU> &UV,
+    Eigen::PlainObjectBase<DerivedF> &FUV,
+    double GradientSize,
+    double Stiffness,
+    bool DirectRound,
+    int iter,
+    int localIter,
+    bool DoRound,
+    bool SingularityRound,
+    std::vector<int> roundVertices,
+    std::vector<std::vector<int> > hardFeatures)
 {
-  Eigen::MatrixXd PD2i = PD2;
-  if (PD2i.size() == 0)
-  {
-    Eigen::MatrixXd B1, B2, B3;
-    igl::local_basis(V,F,B1,B2,B3);
-    PD2i = igl::rotate_vectors(V,Eigen::VectorXd::Constant(1,M_PI/2),B1,B2);
-  }
+  // Eigen::MatrixXd PD2i = PD2;
+  // if (PD2i.size() == 0)
+  // {
+  // Eigen::MatrixXd B1, B2, B3;
+  // igl::local_basis(V,F,B1,B2,B3);
+  // PD2i = igl::rotate_vectors(V,Eigen::VectorXd::Constant(1,M_PI/2),B1,B2);
+  // }
 
   Eigen::PlainObjectBase<DerivedV> BIS1, BIS2;
   igl::compute_frame_field_bisectors(V, F, PD1, PD2, BIS1, BIS2);
@@ -2251,27 +2318,27 @@ IGL_INLINE void igl::miq(const Eigen::PlainObjectBase<DerivedV> &V,
   Eigen::PlainObjectBase<DerivedV> BIS1_combed, BIS2_combed;
   igl::comb_cross_field(V, F, BIS1, BIS2, BIS1_combed, BIS2_combed);
 
-  Eigen::Matrix<int, Eigen::Dynamic, 3> Handle_MMatch;
+  Eigen::PlainObjectBase<DerivedF> Handle_MMatch;
   igl::cross_field_missmatch(V, F, BIS1_combed, BIS2_combed, true, Handle_MMatch);
 
   Eigen::Matrix<int, Eigen::Dynamic, 1> isSingularity, singularityIndex;
   igl::find_cross_field_singularities(V, F, Handle_MMatch, isSingularity, singularityIndex);
 
   Eigen::Matrix<int, Eigen::Dynamic, 3> Handle_Seams;
-  igl::cut_mesh_from_singularities(V, F, Handle_MMatch, isSingularity, singularityIndex, Handle_Seams);
+  igl::cut_mesh_from_singularities(V, F, Handle_MMatch, Handle_Seams);
 
   Eigen::PlainObjectBase<DerivedV> PD1_combed, PD2_combed;
   igl::comb_frame_field(V, F, PD1, PD2, BIS1_combed, BIS2_combed, PD1_combed, PD2_combed);
 
-  igl::miq(V,
+  igl::comiso::miq(V,
            F,
            PD1_combed,
            PD2_combed,
-           BIS1_combed,
-           BIS2_combed,
+           //  BIS1_combed,
+           //  BIS2_combed,
            Handle_MMatch,
            isSingularity,
-           singularityIndex,
+           //  singularityIndex,
            Handle_Seams,
            UV,
            FUV,
@@ -2289,5 +2356,7 @@ IGL_INLINE void igl::miq(const Eigen::PlainObjectBase<DerivedV> &V,
 
 #ifdef IGL_STATIC_LIBRARY
 // Explicit template specialization
-template void igl::mixed_integer_quadrangulate<Eigen::Matrix<double, -1, -1, 0, -1, -1>, Eigen::Matrix<int, -1, -1, 0, -1, -1>, Eigen::Matrix<double, -1, 2, 0, -1, 2> >(Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<double, -1, 2, 0, -1, 2> >&, Eigen::PlainObjectBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> >&, double, double, bool, int, int, bool, std::__1::vector<int, std::__1::allocator<int> >, std::__1::vector<std::__1::vector<int, std::__1::allocator<int> >, std::__1::allocator<std::__1::vector<int, std::__1::allocator<int> > > >);
+template void igl::comiso::miq<Eigen::Matrix<double, -1, 3, 0, -1, 3>, Eigen::Matrix<int, -1, 3, 0, -1, 3>, Eigen::Matrix<double, -1, -1, 0, -1, -1> >(Eigen::PlainObjectBase<Eigen::Matrix<double, -1, 3, 0, -1, 3> > const&, Eigen::PlainObjectBase<Eigen::Matrix<int, -1, 3, 0, -1, 3> > const&, Eigen::PlainObjectBase<Eigen::Matrix<double, -1, 3, 0, -1, 3> > const&, Eigen::PlainObjectBase<Eigen::Matrix<double, -1, 3, 0, -1, 3> > const&, Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> >&, Eigen::PlainObjectBase<Eigen::Matrix<int, -1, 3, 0, -1, 3> >&, double, double, bool, int, int, bool, bool, std::__1::vector<int, std::__1::allocator<int> >, std::__1::vector<std::__1::vector<int, std::__1::allocator<int> >, std::__1::allocator<std::__1::vector<int, std::__1::allocator<int> > > >);
+template void igl::comiso::miq<Eigen::Matrix<double, -1, -1, 0, -1, -1>, Eigen::Matrix<int, -1, -1, 0, -1, -1>, Eigen::Matrix<double, -1, -1, 0, -1, -1> >(Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::Matrix<int, -1, 3, 0, -1, 3> const&, Eigen::Matrix<int, -1, 1, 0, -1, 1> const&, Eigen::Matrix<int, -1, 3, 0, -1, 3> const&, Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> >&, Eigen::PlainObjectBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> >&, double, double, bool, int, int, bool, bool, std::__1::vector<int, std::__1::allocator<int> >, std::__1::vector<std::__1::vector<int, std::__1::allocator<int> >, std::__1::allocator<std::__1::vector<int, std::__1::allocator<int> > > >);
+template void igl::comiso::miq<Eigen::Matrix<double, -1, -1, 0, -1, -1>, Eigen::Matrix<int, -1, -1, 0, -1, -1>, Eigen::Matrix<double, -1, -1, 0, -1, -1> >(Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> >&, Eigen::PlainObjectBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> >&, double, double, bool, int, int, bool, bool, std::__1::vector<int, std::__1::allocator<int> >, std::__1::vector<std::__1::vector<int, std::__1::allocator<int> >, std::__1::allocator<std::__1::vector<int, std::__1::allocator<int> > > >);
 #endif

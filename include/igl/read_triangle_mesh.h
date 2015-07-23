@@ -20,16 +20,19 @@
 
 namespace igl
 {
-  // read mesh from an ascii file with automatic detection of file format. supported: obj, off)
+  // read mesh from an ascii file with automatic detection of file format.
+  // supported: obj, off, stl, wrl, ply, mesh)
+  // 
   // Templates:
   //   Scalar  type for positions and vectors (will be read as double and cast
   //     to Scalar)
   //   Index  type for indices (will be read as int and cast to Index)
   // Inputs:
-  //   str  path to .obj/.off file
+  //   str  path to file
   // Outputs:
   //   V  eigen double matrix #V by 3
   //   F  eigen int matrix #F by 3
+  // Returns true iff success
   template <typename Scalar, typename Index>
   IGL_INLINE bool read_triangle_mesh(
     const std::string str,

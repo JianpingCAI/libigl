@@ -3,8 +3,17 @@ project(609_Boolean)
 
 find_package(CGAL REQUIRED)
 include(${CGAL_USE_FILE})
+# CGAL's monkeying with all of the flags. Rather than change the CGAL_USE_FILE
+# just get ride of this flag.
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  remove_cxx_flag("-stdlib=libc++")
+endif()
 
-# for some reason must come after cgal include
+# This is absolutely necessary for Exact Construction
+
+# for some reason must come after cgal include. I think that it's overwriting
+# come flags like CXX_FLAGS
+#set(CMAKELISTS_SHARED_INCLUDED FALSE)
 include("../CMakeLists.shared")
 
 set(SOURCES

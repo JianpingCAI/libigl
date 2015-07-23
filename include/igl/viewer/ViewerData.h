@@ -5,23 +5,24 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License
 // v. 2.0. If a copy of the MPL was not distributed with this file, You can
 // obtain one at http://mozilla.org/MPL/2.0/.
+#ifndef IGL_VIEWER_VIEWER_DATA_H
+#define IGL_VIEWER_VIEWER_DATA_H
 
-#ifndef IGL_VIEWER_DATA_H
-#define IGL_VIEWER_DATA_H
+#include <cstdint>
+#include <vector>
+
+#include <Eigen/Core>
 
 #include <igl/igl_inline.h>
-#include <Eigen/Core>
 
 namespace igl
 {
+namespace viewer
+{
 
-// Store the data visualized by ViewerCore
 // TODO: write documentation
 
 class ViewerData
-#ifdef ENABLE_XML_SERIALIZATION
-: public ::igl::XMLSerialization
-#endif
 {
 public:
   ViewerData();
@@ -62,9 +63,9 @@ public:
   IGL_INLINE void set_uv(const Eigen::MatrixXd& UV);
   IGL_INLINE void set_uv(const Eigen::MatrixXd& UV_V, const Eigen::MatrixXi& UV_F);
   IGL_INLINE void set_texture(
-                    const Eigen::Matrix<char,Eigen::Dynamic,Eigen::Dynamic>& R,
-                    const Eigen::Matrix<char,Eigen::Dynamic,Eigen::Dynamic>& G,
-                    const Eigen::Matrix<char,Eigen::Dynamic,Eigen::Dynamic>& B);
+                    const Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic>& R,
+                    const Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic>& G,
+                    const Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic>& B);
 
   // Sets points given a list of point vertices. In constrast to `set_points`
   // this will (purposefully) clober existing points.
@@ -96,9 +97,6 @@ public:
   // Generates a default grid texture
   IGL_INLINE void grid_texture();
 
-  // Serialization code
-  IGL_INLINE void InitSerialization();
-
   Eigen::MatrixXd V; // Vertices of the current mesh (#V x 3)
   Eigen::MatrixXi F; // Faces of the mesh (#F x 3)
 
@@ -121,9 +119,9 @@ public:
   Eigen::MatrixXi F_uv; // optional faces for UVs
 
   // Texture
-  Eigen::Matrix<char,Eigen::Dynamic,Eigen::Dynamic> texture_R;
-  Eigen::Matrix<char,Eigen::Dynamic,Eigen::Dynamic> texture_G;
-  Eigen::Matrix<char,Eigen::Dynamic,Eigen::Dynamic> texture_B;
+  Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic> texture_R;
+  Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic> texture_G;
+  Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic> texture_B;
 
   // Overlays
 
@@ -141,7 +139,7 @@ public:
   // Textp contains, in the i-th row, the position in global coordinates where the i-th label should be anchored
   // Texts contains in the i-th position the text of the i-th label
   Eigen::MatrixXd           labels_positions;
-  std::vector<std::string > labels_strings;
+  std::vector<std::string>  labels_strings;
 
   // Marks dirty buffers that need to be uploaded to OpenGL
   uint32_t dirty;
@@ -151,7 +149,7 @@ public:
   /*********************************/
 };
 
-
+}
 }
 
 #ifndef IGL_STATIC_LIBRARY

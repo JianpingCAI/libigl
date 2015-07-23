@@ -42,7 +42,7 @@ extern "C"
 #  undef VOID
 #endif
 
-IGL_INLINE void igl::triangulate(
+IGL_INLINE void igl::triangle::triangulate(
   const Eigen::MatrixXd& V,
   const Eigen::MatrixXi& E,
   const Eigen::MatrixXd& H,
@@ -104,6 +104,17 @@ IGL_INLINE void igl::triangulate(
   // Call triangle
   ::triangulate(const_cast<char*>(full_flags.c_str()), &in, &out, 0);
 
+  // Return the mesh
+  V2.resize(out.numberofpoints,2);
+  for (unsigned i=0;i<V2.rows();++i)
+    for (unsigned j=0;j<2;++j)
+      V2(i,j) = out.pointlist[i*2+j];
+
+  F2.resize(out.numberoftriangles,3);
+  for (unsigned i=0;i<F2.rows();++i)
+    for (unsigned j=0;j<3;++j)
+      F2(i,j) = out.trianglelist[i*3+j];
+
   // Cleanup in
   free(in.pointlist);
   free(in.pointmarkerlist);
@@ -115,17 +126,6 @@ IGL_INLINE void igl::triangulate(
   free(out.pointlist);
   free(out.trianglelist);
   free(out.segmentlist);
-
-  // Return the mesh
-  V2.resize(out.numberofpoints,2);
-  for (unsigned i=0;i<V2.rows();++i)
-    for (unsigned j=0;j<2;++j)
-      V2(i,j) = out.pointlist[i*2+j];
-
-  F2.resize(out.numberoftriangles,3);
-  for (unsigned i=0;i<F2.rows();++i)
-    for (unsigned j=0;j<3;++j)
-      F2(i,j) = out.trianglelist[i*3+j];
 
 }
 

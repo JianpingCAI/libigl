@@ -1,7 +1,7 @@
 // This file is part of libigl, a simple c++ geometry processing library.
 // 
 // Copyright (C) 2013 Alec Jacobson <alecjacobson@gmail.com>
-// 
+//
 // This Source Code Form is subject to the terms of the Mozilla Public License 
 // v. 2.0. If a copy of the MPL was not distributed with this file, You can 
 // obtain one at http://mozilla.org/MPL/2.0/.
@@ -9,14 +9,11 @@
 #define IGL_SLICE_H
 #include "igl_inline.h"
 
-#define EIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET
 #include <Eigen/Sparse>
-
 namespace igl
 {
-  // THIS MAY HAVE BEEN SUPERSEDED BY EIGEN'S select FUNCTION
-  // 
-  // Act like the matlab X(row_indices,col_indices) operator
+  // Act like the matlab X(row_indices,col_indices) operator, where
+  // row_indices, col_indices are non-negative integer indices.
   // 
   // Inputs:
   //   X  m by n matrix
@@ -24,6 +21,8 @@ namespace igl
   //   C  list of column indices
   // Output:
   //   Y  #R by #C matrix
+  //
+  // See also: slice_mask
   template <typename T>
   IGL_INLINE void slice(
     const Eigen::SparseMatrix<T>& X,
@@ -48,6 +47,7 @@ namespace igl
     const Eigen::Matrix<int,Eigen::Dynamic,1> & R,
     const Eigen::Matrix<int,Eigen::Dynamic,1> & C,
     Eigen::PlainObjectBase<DerivedX> & Y);
+
   template <typename DerivedX>
   IGL_INLINE void slice(
     const Eigen::PlainObjectBase<DerivedX> & X,
@@ -63,6 +63,7 @@ namespace igl
     const Eigen::PlainObjectBase<DerivedX>& X,
     const Eigen::Matrix<int,Eigen::Dynamic,1> & R,
     const int dim);
+
 }
 
 #ifndef IGL_STATIC_LIBRARY

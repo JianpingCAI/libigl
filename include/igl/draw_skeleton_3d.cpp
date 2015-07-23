@@ -1,10 +1,13 @@
 // This file is part of libigl, a simple c++ geometry processing library.
-// 
+//
 // Copyright (C) 2013 Alec Jacobson <alecjacobson@gmail.com>
-// 
-// This Source Code Form is subject to the terms of the Mozilla Public License 
-// v. 2.0. If a copy of the MPL was not distributed with this file, You can 
+//
+// This Source Code Form is subject to the terms of the Mozilla Public License
+// v. 2.0. If a copy of the MPL was not distributed with this file, You can
 // obtain one at http://mozilla.org/MPL/2.0/.
+
+#ifndef IGL_NO_OPENGL
+
 #include "draw_skeleton_3d.h"
 #include "PI.h"
 #include "OpenGL_convenience.h"
@@ -12,16 +15,18 @@
 #include <Eigen/Geometry>
 #include <iostream>
 
+
 template <
-  typename DerivedC, 
-  typename DerivedBE, 
-  typename DerivedT, 
+  typename DerivedC,
+  typename DerivedBE,
+  typename DerivedT,
   typename Derivedcolor>
 IGL_INLINE void igl::draw_skeleton_3d(
   const Eigen::PlainObjectBase<DerivedC> & C,
   const Eigen::PlainObjectBase<DerivedBE> & BE,
   const Eigen::PlainObjectBase<DerivedT> & T,
-  const Eigen::PlainObjectBase<Derivedcolor> & color)
+  const Eigen::PlainObjectBase<Derivedcolor> & color,
+  const double half_bbd)
 {
   // Note: Maya's skeleton *does* scale with the mesh suggesting a scale
   // parameter. Further, its joint balls are not rotated with the bones.
@@ -29,7 +34,7 @@ IGL_INLINE void igl::draw_skeleton_3d(
   using namespace std;
   if(color.size() == 0)
   {
-    return draw_skeleton_3d(C,BE,T,MAYA_SEA_GREEN);
+    return draw_skeleton_3d(C,BE,T,MAYA_SEA_GREEN,half_bbd);
   }
   assert(color.cols() == 4 || color.size() == 4);
   if(T.size() == 0)
@@ -42,15 +47,13 @@ IGL_INLINE void igl::draw_skeleton_3d(
     {
       return;
     }
-    return draw_skeleton_3d(C,BE,T,color);
+    return draw_skeleton_3d(C,BE,T,color,half_bbd);
   }
   assert(T.rows() == BE.rows()*(C.cols()+1));
   assert(T.cols() == C.cols());
-  // old settings
-  int old_lighting=0;
-  double old_line_width=1;
-  glGetIntegerv(GL_LIGHTING,&old_lighting);
-  glGetDoublev(GL_LINE_WIDTH,&old_line_width);
+  // push old settings
+  glPushAttrib(GL_LIGHTING_BIT);
+  glPushAttrib(GL_LINE_BIT);
   glDisable(GL_LIGHTING);
   glLineWidth(1.0);
 
@@ -103,7 +106,7 @@ IGL_INLINE void igl::draw_skeleton_3d(
     auto s = C.row(BE(e,0));
     auto d = C.row(BE(e,1));
     auto b = (d-s).transpose().eval();
-    double r = 0.02;
+    double r = 0.02*half_bbd;
     Matrix4d Te = Matrix4d::Identity();
     Te.block(0,0,3,4) = T.block(e*4,0,4,3).transpose();
     Quaterniond q;
@@ -113,8 +116,7 @@ IGL_INLINE void igl::draw_skeleton_3d(
     glTranslated(s(0),s(1),s(2));
     if(color.size() == 4)
     {
-      Vector4d d = color.template cast<double>();
-      glColor4dv(d.data());
+      glColor4d( color(0), color(1), color(2), color(3));
     }else
     {
       glColor4d( color(e,0), color(e,1), color(e,2), color(e,3));
@@ -136,8 +138,8 @@ IGL_INLINE void igl::draw_skeleton_3d(
     glPopMatrix();
   }
   // Reset settings
-  (old_lighting ? glEnable(GL_LIGHTING) : glDisable(GL_LIGHTING));
-  glLineWidth(old_line_width);
+  glPopAttrib();
+  glPopAttrib();
 }
 
 template <typename DerivedC, typename DerivedBE, typename DerivedT>
@@ -157,9 +159,16 @@ IGL_INLINE void igl::draw_skeleton_3d(
   return draw_skeleton_3d(C,BE,Eigen::MatrixXd(),MAYA_SEA_GREEN);
 }
 
+#endif
+
 #ifdef IGL_STATIC_LIBRARY
+#ifndef IGL_NO_OPENGL
+
 // Explicit template instanciation
 template void igl::draw_skeleton_3d<Eigen::Matrix<double, -1, -1, 0, -1, -1>, Eigen::Matrix<int, -1, -1, 0, -1, -1> >(Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> > const&);
 template void igl::draw_skeleton_3d<Eigen::Matrix<double, -1, -1, 0, -1, -1>, Eigen::Matrix<int, -1, -1, 0, -1, -1>, Eigen::Matrix<double, -1, -1, 0, -1, -1> >(Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&);
-template void igl::draw_skeleton_3d<Eigen::Matrix<double, -1, -1, 0, -1, -1>, Eigen::Matrix<int, -1, -1, 0, -1, -1>, Eigen::Matrix<double, -1, -1, 0, -1, -1>, Eigen::Matrix<float, -1, -1, 0, -1, -1> >(Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<float, -1, -1, 0, -1, -1> > const&);
+template void igl::draw_skeleton_3d<Eigen::Matrix<double, -1, -1, 0, -1, -1>, Eigen::Matrix<int, -1, -1, 0, -1, -1>, Eigen::Matrix<double, -1, -1, 0, -1, -1>, Eigen::Matrix<float, 4, 1, 0, 4, 1> >(Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<float, 4, 1, 0, 4, 1> > const&, double);
+template void igl::draw_skeleton_3d<Eigen::Matrix<double, -1, -1, 0, -1, -1>, Eigen::Matrix<int, -1, -1, 0, -1, -1>, Eigen::Matrix<double, -1, -1, 0, -1, -1>, Eigen::Matrix<float, -1, -1, 0, -1, -1> >(Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::PlainObjectBase<Eigen::Matrix<float, -1, -1, 0, -1, -1> > const&, double);
+
+#endif
 #endif

@@ -26,7 +26,6 @@ IGL_INLINE bool igl::boundary_conditions(
   Eigen::MatrixXd &       bc )
 {
   using namespace Eigen;
-  using namespace igl;
   using namespace std;
 
   if(P.size()+BE.rows() == 0)
@@ -35,10 +34,9 @@ IGL_INLINE bool igl::boundary_conditions(
     return false;
   }
 
-
   vector<int> bci;
   vector<int> bcj;
-  vector<int> bcv;
+  vector<double> bcv;
 
   // loop over points
   for(int p = 0;p<P.size();p++)
@@ -95,7 +93,6 @@ IGL_INLINE bool igl::boundary_conditions(
     }
   }
 
-  // Cage edges are not considered yet
   // loop over cage edges
   for(int e = 0;e<CE.rows();e++)
   {
@@ -153,7 +150,7 @@ IGL_INLINE bool igl::boundary_conditions(
   for(i = 0;i<bc.rows();i++)
   {
     double sum = bc.row(i).sum();
-    assert(sum != 0);
+    assert(sum != 0 && "Some boundary vertex getting all zero BCs");
     bc.row(i).array() /= sum;
   }
 

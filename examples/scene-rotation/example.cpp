@@ -3,38 +3,53 @@
 
 #include "trackball.h"
 
-#include <igl/two_axis_valuator_fixed_up.h>
+#include <igl/Camera.h>
+#include <igl/REDRUM.h>
+#include <igl/draw_floor.h>
+#include <igl/draw_mesh.h>
+#include <igl/get_seconds.h>
+#include <igl/list_to_matrix.h>
+#include <igl/material_colors.h>
+#include <igl/pathinfo.h>
+#include <igl/per_face_normals.h>
+#include <igl/polygon_mesh_to_triangle_mesh.h>
+#include <igl/quat_to_mat.h>
+#include <igl/readMESH.h>
 #include <igl/readOBJ.h>
-#include <igl/writeOBJ.h>
-#include <igl/writeOFF.h>
+#include <igl/readOFF.h>
 #include <igl/readWRL.h>
 #include <igl/report_gl_error.h>
-#include <igl/polygon_mesh_to_triangle_mesh.h>
-#include <igl/readOFF.h>
-#include <igl/readMESH.h>
-#include <igl/draw_mesh.h>
-#include <igl/draw_floor.h>
-#include <igl/pathinfo.h>
-#include <igl/list_to_matrix.h>
-#include <igl/quat_to_mat.h>
-#include <igl/per_face_normals.h>
-#include <igl/material_colors.h>
-#include <igl/trackball.h>
 #include <igl/snap_to_canonical_view_quat.h>
 #include <igl/snap_to_fixed_up.h>
-#include <igl/REDRUM.h>
-#include <igl/Camera.h>
-#include <igl/ReAntTweakBar.h>
-#include <igl/get_seconds.h>
+#include <igl/trackball.h>
+#include <igl/two_axis_valuator_fixed_up.h>
+#include <igl/writeOBJ.h>
+#include <igl/writeOFF.h>
+#include <igl/anttweakbar/ReAntTweakBar.h>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
-#include <Carbon/Carbon.h>
 #else
 #include <GL/glut.h>
+#endif
+
+#ifndef GLUT_WHEEL_UP
+#define GLUT_WHEEL_UP    3
+#endif
+#ifndef GLUT_WHEEL_DOWN
+#define GLUT_WHEEL_DOWN  4
+#endif
+#ifndef GLUT_WHEEL_RIGHT
+#define GLUT_WHEEL_RIGHT 5
+#endif
+#ifndef GLUT_WHEEL_LEFT
+#define GLUT_WHEEL_LEFT  6
+#endif
+#ifndef GLUT_ACTIVE_COMMAND
+#define GLUT_ACTIVE_COMMAND 8
 #endif
 
 #include <string>
@@ -86,7 +101,7 @@ int width,height;
 Eigen::Vector4f light_pos(-0.1,-0.1,0.9,0);
 
 #define REBAR_NAME "temp.rbr"
-igl::ReTwBar rebar;
+igl::anttweakbar::ReTwBar rebar;
 
 void push_undo()
 {
@@ -483,14 +498,6 @@ void init_relative()
 }
 
 
-KeyMap keyStates ;
-bool IS_KEYDOWN( uint16_t vKey )
-{
-  uint8_t index = vKey / 32 ;
-  uint8_t shift = vKey % 32 ;
-  return keyStates[index].bigEndianValue & (1 << shift) ;
-}
-
 
 void undo()
 {
@@ -519,9 +526,9 @@ void key(unsigned char key, int mouse_x, int mouse_y)
   using namespace std;
   using namespace igl;
   using namespace Eigen;
-  GetKeys(keyStates);
-  const bool command_down = IS_KEYDOWN(kVK_Command);
-  const bool shift_down = IS_KEYDOWN(kVK_Shift);
+  const int mod = glutGetModifiers();
+  const bool command_down = mod | GLUT_ACTIVE_COMMAND;
+  const bool shift_down = mod | GLUT_ACTIVE_SHIFT;
   switch(key)
   {
     // ESC
@@ -655,11 +662,11 @@ int main(int argc, char * argv[])
   rebar.TwNewBar("TweakBar");
   rebar.TwAddVarRW("camera_rotation", TW_TYPE_QUAT4D,
     s.camera.m_rotation_conj.coeffs().data(), "open readonly=true");
-  TwType RotationTypeTW = ReTwDefineEnumFromString("RotationType",
+  TwType RotationTypeTW = igl::anttweakbar::ReTwDefineEnumFromString("RotationType",
     "igl_trackball,bell_trackball,two-axis-valuator,two-a...-fixed-up");
   rebar.TwAddVarCB( "rotation_type", RotationTypeTW,
     set_rotation_type,get_rotation_type,NULL,"keyIncr=] keyDecr=[");
-  TwType CenterTypeTW = ReTwDefineEnumFromString("CenterType","orbit,fps");
+  TwType CenterTypeTW = igl::anttweakbar::ReTwDefineEnumFromString("CenterType","orbit,fps");
   rebar.TwAddVarRW("center_type", CenterTypeTW,&center_type,
     "keyIncr={ keyDecr=}");
   rebar.load(REBAR_NAME);
